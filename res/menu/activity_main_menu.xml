@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_settings"
+        android:title="@string/menu_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never" >
+        <menu>
+            <item android:id="@+id/AudioSetting" android:enabled="true" android:menuCategory="system" android:title="Audio Setting" android:visible="true" android:titleCondensed="Aud Set"/>
+            <item android:id="@+id/TimerSetting" android:enabled="true" android:menuCategory="system" android:title="Timer Setting" android:numericShortcut="1" android:alphabeticShortcut="T" android:visible="true" android:titleCondensed="TimSet"/>
+        </menu>
+    </item>
+    <item android:id="@+id/mi_Save" android:title="Save" android:numericShortcut="2" android:alphabeticShortcut="S" android:titleCondensed="Save" android:showAsAction="ifRoom" android:enabled="true" android:visible="true"></item>
+</menu>
