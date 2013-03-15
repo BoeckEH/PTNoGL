@@ -10,7 +10,7 @@ public class MonitorMic
 {
 	private boolean shouldStop = false;
 	public Handler maxHandler;
-	public int sampleRate;
+	public int sampleRate, bufferRequest;
 	protected GetAudioFromMic micAudio;
 	
 	
@@ -18,10 +18,11 @@ public class MonitorMic
 	* the constructor requires the callback handler to be called
 	* @return
 	*/
-	MonitorMic(Handler aHandler, int sampleRate)
+	MonitorMic(Handler aHandler, int sampleRate, int bufferRequest)
 	{
 		maxHandler = aHandler;
 		this.sampleRate = sampleRate;
+		this.bufferRequest = bufferRequest;
 	}
 	/**
 	* create the runnable part so that the meaty parts can be put on a thread
@@ -32,7 +33,7 @@ public class MonitorMic
 		public void run() {
 
 			// instantiate the class that creates and reads the hardware
-			micAudio = new GetAudioFromMic(maxHandler, sampleRate);
+			micAudio = new GetAudioFromMic(maxHandler, sampleRate, bufferRequest);
 		    //  and ......  GO!
 		    micAudio.startRecording();
 		    // infinite (but controlled) loop

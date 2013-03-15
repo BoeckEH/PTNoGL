@@ -31,9 +31,12 @@ public class GetAudioFromMic {
 	 * constructor ... no params, set up the audio recorder for monitoring 
 	 * @return
 	 */
-	GetAudioFromMic(Handler bufFullHandler, int sampleRateInHz) {
+	GetAudioFromMic(Handler bufFullHandler, int sampleRateInHz, int bufferRequest) {
 		// determine the min buffer required
         minBufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
+        // try for a requested buffer
+//        if (minBufferSize < bufferRequest) 
+        		minBufferSize = bufferRequest; 
         // create the recorder
         aRecorder = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, minBufferSize * 10);
         // allocate a buffer to store the data in 
@@ -56,21 +59,13 @@ public class GetAudioFromMic {
 		public void onPeriodicNotification(AudioRecord recorder) {
 			// on the notification, go read the recorder into the buffer
 			bufferReadNum = recorder.read(buffer, 0, minBufferSize);
-		    // init some vars
-		    int maxSoundLevel = 0;
 			// used to determine how long this loops takes
 			long l_processTime = System.currentTimeMillis();
-
-			// loop it looking for the |max|
-//			for (int ii=0; ii < minBufferSize; ii++)
-//			{
-//				if (Math.abs(buffer[ii]) > maxSoundLevel) maxSoundLevel = Math.abs(buffer[ii]);
-//			}
 			// the bundle used as the message payload to the handler
 			Bundle maxValueDataBundle = new Bundle();
 			Message setMaxValMessage = new Message();
 			// Bundle the max sound level into the capsule
-			maxValueDataBundle.putInt("MaxVal",maxSoundLevel);
+			maxValueDataBundle.putInt("MaxVal",0);
 			// wait until the last millisec to calc the time this routine takes
 			l_processTime = System.currentTimeMillis() - l_processTime;
 			// Bundle the max sound level into the capsule
@@ -83,8 +78,6 @@ public class GetAudioFromMic {
 			setMaxValMessage.setData(maxValueDataBundle);
 			// and launch
 			mainThreadBufFullHandler.sendMessage(setMaxValMessage);
-			// clear the max for the next max calc
-			maxSoundLevel = 0;
 			
 		}
 		
