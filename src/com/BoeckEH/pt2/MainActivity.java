@@ -2,6 +2,7 @@ package com.BoeckEH.pt2;
 
 
 import java.util.Arrays;
+import java.util.Locale;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -9,15 +10,14 @@ import javax.microedition.khronos.opengles.GL10;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
-import android.animation.ArgbEvaluator;
 import android.app.Activity;
-import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
-
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
@@ -30,9 +30,9 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.MenuItem;
-
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.support.v4.app.NavUtils;
 
@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
 		
 		public static int bitMapWidth = 512;
 		public static int bitMapHeight = 512;
-		public static int minSample = bitMapWidth * 2;
+		public static int minSample = 256;
 		
 		// determines how many times the handler is called back
 		long callsToHandlr = 0;
@@ -58,10 +58,13 @@ public class MainActivity extends Activity {
 		ForFFT prepFFT = new ForFFT();
 		// create the class to actually DO the FFT
 		ColumFFT cFFT;
-	    double[] magnitude;		
+	    float[] magnitude;
+	    public static final int distanceBack = 24;
+	    float[][] fordraw = new float[distanceBack][minSample*3/2];
+;
 		ImageView scopeView;
-		int sampleFreq = 44100;
-		int bufferRequest = 4096;
+		int sampleFreq = 22050;
+		int bufferRequest = 512;
 		MonitorMic monTheMic;
 		int iterLen;
 		
@@ -90,9 +93,12 @@ public class MainActivity extends Activity {
     	int zz = 0;
     	int width, bottom;
         String freqString = new String();
-    	private GLSurfaceView mGLView;
+    	public GLSurfaceView mGLView;
     	public boolean touchDn = false;
     	public float pressureDown;
+    	
+    	public static LayoutParams myLP;
+    	public static LinearLayout myLL;
   	
     	@Override
 	    public void onCreate(Bundle savedInstanceState) 
@@ -138,10 +144,17 @@ public class MainActivity extends Activity {
 	        width = iv_bitmap1.getWidth();
 	        bottom = iv_bitmap1.getHeight();
 
-	        StartMonitoring();
-		  
-//	        mGLView = new PTSurfaceView(this);
+	        for (int zz = 0; zz < 10; zz++)
+	        	Arrays.fill(fordraw[zz], (float) zz);
+//	        
+	        myLL = (LinearLayout) findViewById(R.id.LL);
+	        mGLView = new PTSurfaceView(this);
+	        ViewGroup.LayoutParams cIV = myLL.getLayoutParams();
+	        myLP = new ViewGroup.LayoutParams(cIV);
+	        
+	        myLL.addView(mGLView, myLP);
 //	        setContentView(mGLView);
+	        StartMonitoring();
 	 
 	    };
 
@@ -223,7 +236,7 @@ public class MainActivity extends Activity {
 		    	double[] im_buffer = new double[minSample];
 				short[] seg_re_buffer = new short[minSample];
 				double[] re_buffer = new double[minSample];
-				Bitmap tmpBitmap;
+//				Bitmap tmpBitmap;
 				Arrays.fill(im_buffer, 0);
 
 				
@@ -238,43 +251,62 @@ public class MainActivity extends Activity {
 					
 					cFFT = new ColumFFT(minSample);
 					cFFT.fft(re_buffer, im_buffer);
-				    magnitude = new double[re_buffer.length];
-				    iterLen = re_buffer.length/2;
+				    iterLen = re_buffer.length/2 ;
+				    magnitude = new float[iterLen*3];
+//				    Arrays.fill(magnitude, 2.3f);
 			        // TODO:  need to decide which way we are going to graph here
 			        
 			        // if drawing the line type graph
 				    maxMagnitude = Math.hypot(re_buffer[0], im_buffer[0]); 
-			        for(int i = 0; i < iterLen ; i++)
+				    for(int ii = 3, jj = 0; ii < (iterLen) * 3 ; ii += 3, jj++)
 			        {
-				        magnitude[i]= Math.hypot(re_buffer[i], im_buffer[i]);
+				        // this is x
+			        	magnitude[ii] = (float) jj / (float) iterLen;
+			        	// this is y
+			        	magnitude[ii+1]= (float)((Math.hypot(re_buffer[jj], im_buffer[jj])) - 0.5)/10000.0f;
 //				        if (maxMagnitude < magnitude[i]) maxMagnitude = magnitude[i];
+			        	// this is z
+			        	magnitude[ii+2] = 0.5f;
 				    }
 				    payloadInt = (int) maxMagnitude;
 
+				    drawingRunning = true;
+
+				    int startCopy = 0;
+				    int copyLength = magnitude.length;
+				    for (int zz=distanceBack-2; zz >= 0; zz--)
+				    {
+				    	System.arraycopy(fordraw[zz], startCopy, fordraw[zz+1], 0, copyLength);
+				    	for (int xx=0;xx<magnitude.length;xx+=3)
+				    		fordraw[zz+1][xx+2] = 0.5f - ((float)zz/(float)distanceBack) - 0.1f;
+				    };	
+				    	
+				    	
+				    System.arraycopy(magnitude, 0, fordraw[0], 0, copyLength);
+				    drawingRunning = false;
+
+//				    mGLView.requestRender();
+				    
 				    // if drawing spectrum
 //				    tmpBitmap = drawFFTCurveViaBM();
-				
-		        
  					// if drawing spectrum echogram type
- 					tmpBitmap = drawFFTSpecCurveViaBM();
-
-
-					publishProgress(tmpBitmap);
-
+// 					tmpBitmap = drawFFTSpecCurveViaBM();
+//					publishProgress(tmpBitmap);
+				    publishProgress((Bitmap)null);
 				    
 				}
 			    re_buffer = null;
 			    im_buffer = null;
 			    seg_re_buffer = null;
 			    System.gc();
-//			    Log.i("Step", "Garbage Collected");
 			    return null;
 			}
 			
 		     protected void onProgressUpdate(Bitmap... bitmap) {
-				    Log.i("Step", "Update");
+//				    Log.i("Step", "Update");
+				    mGLView.requestRender();
 		    	 
-		    	 scopeView.setImageDrawable(new BitmapDrawable(getResources(), bitmap[0]));
+//		    	 scopeView.setImageDrawable(new BitmapDrawable(getResources(), bitmap[0]));
 		     	}
 		     
 		     
@@ -353,10 +385,6 @@ public class MainActivity extends Activity {
 	        return bitmap;
 
 	    }
-	    
-	    
-	    
-	    
 	    
 
 	    // used to draw spectrum 
@@ -441,9 +469,9 @@ public class MainActivity extends Activity {
 		        if (((jj % 64) == 0) || (i == (bufRead - (4 * xresolution))) || i == (4 * xresolution)) 
 		        {
 		        	if (i == (4 * xresolution))
-		        		freqString = String.format("%d", 0);
+		        		freqString = String.format(Locale.getDefault(), "%d", 0);
 		        	else
-		        		freqString = String.format("%d", (int) (ComputeFrequency(i, bufRead, sampleFreq) / 4) );
+		        		freqString = String.format(Locale.getDefault(),"%d", (int) (ComputeFrequency(i, bufRead, sampleFreq) / 4) );
 		        	drawText(canvas, tPaint, freqString, (int) (i/xresolution), bottom - 20, 255, -90);
 		        }
 	        }
@@ -488,69 +516,69 @@ public class MainActivity extends Activity {
 	    
 	
 
- class PTSurfaceView extends GLSurfaceView {
-
-   public ScreenRenderer myRenderer;
-
+	class PTSurfaceView extends GLSurfaceView {
 	
-	public PTSurfaceView(Context context){
-      super( context );
-      setEGLContextClientVersion(2);
-      myRenderer = new ScreenRenderer( context );
-      // Set the Renderer for drawing on the GLSurfaceView
-      setRenderer( myRenderer );
-   // Render the view only when there is a change in the drawing data
-      setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-   }
-   
-   @Override
-   public boolean onTouchEvent(MotionEvent e) {
-       // MotionEvent reports input details from the touch screen
-       // and other input controls. In this case, you are only
-       // interested in events where the touch position changed.
-
-       float x = e.getX();
-       float y = e.getY();
-       pressureDown = e.getPressure();
-
-       switch (e.getAction()) {
-           case MotionEvent.ACTION_MOVE:
-
-               float dx = x - mPreviousX;
-               float dy = y - mPreviousY;
-
-               // reverse direction of rotation above the mid-line
-               if (y > getHeight() / 2) {
-                 dx = dx * -1 ;
-               }
-
-               // reverse direction of rotation to left of the mid-line
-               if (x < getWidth() / 2) {
-                 dy = dy * -1 ;
-               }
-
-               myRenderer.mAngle += (dx + dy) * TOUCH_SCALE_FACTOR;  // = 180.0f / 320
-               requestRender();
-           case MotionEvent.ACTION_DOWN:
-        	   touchDn = true;
-               requestRender();
-               break;
-           case MotionEvent.ACTION_UP:
-        	   touchDn = false;
-               requestRender();
-        	   break;
-       }
-
-       mPreviousX = x;
-       mPreviousY = y;
-       return true;
-   }
-}
+	   public ScreenRenderer myRenderer;
+	
+		
+		public PTSurfaceView(Context context){
+	      super( context );
+	      setEGLContextClientVersion(2);
+	      myRenderer = new ScreenRenderer( context );
+	      // Set the Renderer for drawing on the GLSurfaceView
+	      setRenderer( myRenderer );
+	   // Render the view only when there is a change in the drawing data
+	      setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+	   }
+	   
+	   @Override
+	   public boolean onTouchEvent(MotionEvent e) {
+	       // MotionEvent reports input details from the touch screen
+	       // and other input controls. In this case, you are only
+	       // interested in events where the touch position changed.
+	
+	       float x = e.getX();
+	       float y = e.getY();
+	       pressureDown = e.getPressure();
+	
+	       switch (e.getAction()) {
+	           case MotionEvent.ACTION_MOVE:
+	
+	               float dx = x - mPreviousX;
+	               float dy = y - mPreviousY;
+	
+	               // reverse direction of rotation above the mid-line
+	               if (y > getHeight() / 2) {
+	                 dx = dx * -1 ;
+	               }
+	
+	               // reverse direction of rotation to left of the mid-line
+	               if (x < getWidth() / 2) {
+	                 dy = dy * -1 ;
+	               }
+	
+	               myRenderer.mAngle += (dx + dy) * TOUCH_SCALE_FACTOR;  // = 180.0f / 320
+	               requestRender();
+	           case MotionEvent.ACTION_DOWN:
+	        	   touchDn = true;
+	               requestRender();
+	               break;
+	           case MotionEvent.ACTION_UP:
+	        	   touchDn = false;
+	               requestRender();
+	        	   break;
+	       }
+	
+	       mPreviousX = x;
+	       mPreviousY = y;
+	       return true;
+	   }
+	}
     
-class ScreenRenderer implements GLSurfaceView.Renderer
-{
+	class ScreenRenderer implements GLSurfaceView.Renderer
+	{
 	   private Context context;                           // Context (from Activity)
-	   public Triangle mTriangle;
+	   public LineGraphData mLineGraphData;
 	   public float[] mProjMatrix = new float[16];
 	   public float[] mMVPMatrix = new float[16];
 	   public float[] mVMatrix = new float[16];
@@ -559,49 +587,63 @@ class ScreenRenderer implements GLSurfaceView.Renderer
 	   public ScreenRenderer(Context context)  {
 	      super();
 	      this.context = context;                         // Save Specified Context
-	      this.mTriangle = new Triangle();
+	      this.mLineGraphData = new LineGraphData();
 	      
 	   }
 
 	   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 	      // Set the background frame color
 //	      gl.glClearColor( 01f, 01f, 01f, 1.0f );
-		   mTriangle = new Triangle();
+		   mLineGraphData = new LineGraphData();
 
 	   }
 
 	   public void onDrawFrame(GL10 gl) {
-	      // Redraw background color
-	      gl.glClear( GL10.GL_COLOR_BUFFER_BIT );
-
-	      // Set to ModelView mode
-	      gl.glMatrixMode( GL10.GL_MODELVIEW );           // Activate Model View Matrix
-//	      gl.glMatrixMode(GL10.GL_PROJECTION);
-	      gl.glLoadIdentity();                            // Load Identity Matrix
-
-
-//	      gl.glTranslatef(0.0f, 0.0f, -5.0f);
-	      
-	      // Set the camera position (View matrix)
-	      Matrix.setLookAtM(mVMatrix, 0, 0, 0, -4.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
-//	      gl.glFrustumf(-1f, 1f, -1f, 1f, .1f, 10f);
-	      // Calculate the projection and view transformation
-	      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
-
-	      // Create a rotation transformation for the triangle
-//	      long time = SystemClock.uptimeMillis() % 4000L;
-//	      float angle = 0.090f * ((int) time);
-
-	      Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, -1.0f);
-
-	      // Combine the rotation matrix with the projection and camera view
-	      Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
-	      if (touchDn)
-	    	  mTriangle.changeToDnColour(pressureDown * 2); else mTriangle.changeToUpColour();
-//	      mSquare.draw(mMVPMatrix); 
-	      mTriangle.draw(mMVPMatrix);
-	       
-	      
+//		      if ((magnitude != null) && !drawingRunning)
+		   boolean waited = false;
+		   if (fordraw != null)
+		      {
+			   	  long endTime = System.currentTimeMillis();
+		    	  while (drawingRunning) 
+		    	  {
+		    		  waited = true;
+		    	  };
+		    	  
+		    	  if (waited)
+		    		  Log.i("Step", String.format("Waited: %5d ms.", System.currentTimeMillis() - endTime));              
+		    	  // Redraw background color
+			      gl.glClear( GL10.GL_COLOR_BUFFER_BIT );
+		
+			      // Set to ModelView mode
+			      gl.glMatrixMode( GL10.GL_MODELVIEW );           // Activate Model View Matrix
+		//	      gl.glMatrixMode(GL10.GL_PROJECTION);
+			      gl.glLoadIdentity();                            // Load Identity Matrix
+		
+		
+		//	      gl.glTranslatef(0.0f, 0.0f, -5.0f);
+			      
+			      // Set the camera position (View matrix)
+			      Matrix.setLookAtM(mVMatrix, 0, 
+			    		  0.5f,  1.0f,  1.5f, 
+			    		  0f,    0.0f, -7.0f, 
+			    		  0f,    2.0f,  0.0f);
+		//	      gl.glFrustumf(-1f, 1f, -1f, 1f, .1f, 10f);
+			      // Calculate the projection and view transformation
+			      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
+		
+			      // Create a rotation transformation for the triangle
+		//	      long time = SystemClock.uptimeMillis() % 4000L;
+		//	      float angle = 0.090f * ((int) time);
+		
+			      Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, -1.0f);
+		
+			      // Combine the rotation matrix with the projection and camera view
+			      Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
+		//	      if (touchDn)
+		//	    	  mLineGraphData.changeToDnColour(pressureDown * 2); else mLineGraphData.changeToUpColour();
+		//	      mSquare.draw(mMVPMatrix);
+			      mLineGraphData.draw(mMVPMatrix, fordraw, fordraw[0].length / 3);
+		      }
 	   }
 
 	   public void onSurfaceChanged(GL10 gl, int x, int y) {
@@ -614,16 +656,17 @@ class ScreenRenderer implements GLSurfaceView.Renderer
 	       }
 
 	       gl.glViewport(0, 0, x, y); // Reset The Current Viewport
-	       Matrix.frustumM(mProjMatrix, 0, -aspect, aspect, -1, 1, 2, 9);
+	       Matrix.frustumM(mProjMatrix, 0, -aspect, aspect, -1, 1, 1, 10);
 	       
 	   }
 
-}
-/*	    
+	}
+	    
 	    //{{ Activity control 
 	    @Override
 	    protected void onPause()
 	    {
+	    	mGLView.onPause();
 	    	monTheMic.StopMonitoringMic();
 	    	toExecThread.shutDown();
 	    	toExecThread.shutDownNow();
@@ -637,12 +680,13 @@ class ScreenRenderer implements GLSurfaceView.Renderer
 	    	super.onResume();
 	    	monTheMic.StartMonitoringMic();
 	    	toExecThread.runTask(monTheMic.audioRunnable);
-
+	    	mGLView.onResume();
 	    }
 
 	    @Override
 	    protected void onStop()
 	    {
+	    	
 	    	monTheMic.StopMonitoringMic();
 	    	toExecThread.shutDown();
 	    	toExecThread.shutDownNow();
@@ -668,7 +712,7 @@ class ScreenRenderer implements GLSurfaceView.Renderer
 	    	super.onDestroy();
 	    	
 	    }
-*/}
+}
 
 
 

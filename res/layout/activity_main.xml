@@ -1,30 +1,46 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+<LinearLayout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/LL_master"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentRight="true"
+    android:orientation="vertical" >
 
     <TextView
         android:id="@+id/tv_test"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="20"
+        android:text="Large Text"
+        android:textSize="20sp" />
+
+    <SeekBar
+        android:id="@+id/sb_GLParamZ"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:layout_weight="30"
-        android:text="Large Text"
-        android:textSize="20px"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:layout_alignTop="@+id/iv_Scope"
+        android:layout_below="@id/tv_test"
+        android:layout_weight="20" />
 
     <ImageView
         android:id="@+id/iv_Scope"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/tv_test"
-        android:layout_weight="70"
+        android:layout_below="@id/sb_GLParamZ"
+        android:layout_weight="20"
         android:contentDescription="nothing much"
         android:gravity="center"
         android:src="@android:drawable/gallery_thumb" />
-    
-</RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/LL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="100"
+        android:orientation="vertical" >
+
+    </LinearLayout>
+
+</LinearLayout>
