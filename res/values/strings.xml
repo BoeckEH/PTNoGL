@@ -3,6 +3,160 @@
     <string name="app_name">PT2</string>
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
-    <string name="title_activity_main">PT2 openGL graphing</string>
+    <string name="title_activity_main">PT2 No openGL</string>
+    <string name="set_preferences">Preferences</string>
+    
+    
+<!-- Strings for Audio Preferences Page -->
 
+<!--    Audio Preferences Page	
+    	1	Minutes to practice		- 	number
+    	2	Audio level to trigger	-	number % of max
+    	3	Quantum time interval	-	number (secs to time once it is triggered)
+    	4	Auto gain enable		-	check box
+    	5	Auto gain recovery (PID)-	number (depends on 4)
+ -->    
+
+
+    <string name="settings_audio">Audio Settings</string>
+    <string name="settings_audioHeader">Audio</string>
+    <string name="settings_audioSummary">Gain control, level adjust, etc.</string>
+
+    <string name="settings_minutesToPractice">Total practice time</string>
+    <string name="settings_minutesToPracticeSummary">Time to practice this session in total (min)</string>
+   
+    <string name="settings_autoGainEnable">Enable Auto Gain</string>
+    <string name="settings_autoGainEnableSummary">Enable automatic gain for the microphone</string>
+
+    <string name="settings_autoGainFactor">Auto Gain Recovery</string>
+    <string name="settings_autoGainFactorSummary">How fast should the automatic gain recover (thou)</string>
+
+    <string name="settings_triggerLevel">Trigger Level</string>
+    <string name="settings_triggerLevelSummary">At what sound level the timer will continue (%)</string>
+
+    <string name="settings_quantumTimer">Count down window</string>
+    <string name="settings_quantumTimerSummary">Continue timing when silence begins (sec)</string>
+    
+ <!-- Strings for SoundCloud preferences page -->   
+
+<!--     SoundCloud Preference page
+    	1	SoundCloud enable		-	checkbox
+    	2	SoundCloud user name 	-	Text (depends on 1)
+    	3	SoundCloud password		-	password Text (depends on 1)
+    	4	Update SC on WiFi only	-	checkbox (depends on 1)
+    	5	Update in sep thread	-	checkbox (depends on 1) (default on, warn if off)
+ -->    
+    
+    <string name="settings_soundCloud">SoundCloud Settings</string>
+    <string name="settings_soundCloudHeader">SoundCloud</string>
+    <string name="settings_soundCloudSummary">Send a snippet of your practice to SoundCloud</string>
+    
+    <string name="settings_scEnable">Enable SoundCloud</string>
+    <string name="settings_scEnableSummary">Use your SoundCloud account to send snippets to</string>
+    
+    <string name="settings_scUsername">Set SoundCloud Username</string>
+    <string name="settings_scUsernameSummary">Allows this user to send captures to SoundCloud</string>
+    
+    <string name="settings_scPassword">Set SoundCloud Password</string>
+    <string name="settings_scPasswordSummary">Allows this user to send captures to SoundCloud</string>
+
+    <string name="settings_scUpdateOnlyWifi">Send SoundCloud Wi-Fi only</string>
+    <string name="settings_scUpdateOnlyWifiSummary">Send to SoundCloud only when connected to Wi-Fi</string>
+    
+    <string name="settings_scUpdateSeparateThread">Send Threaded</string>
+    <string name="settings_scUpdateSeperateThreadSummary">Send SoundCloud on a separate thread (!! expert)</string>
+    
+<!-- Strings for Registration preferences page -->
+
+<!--      Registration Preferences page	
+    	1	register					- checkbox
+    	2	user name for registration	- Text (depends on 1)
+    	3	user password for reg		- Password Text (depends on 1)
+    	4	receive notices				- checkbox
+    	5	user email for notifications- email text (depends on 4)
+ -->    
+    
+    <string name="settings_register">Registration Settings</string>
+    <string name="settings_registerHeader">Registration</string>
+    <string name="settings_registerSummary">Registration and user settings</string>
+    
+    <string name="settings_registerEnable">Enable Registration</string>
+    <string name="settings_registerEnableSummary">Register for updates and notices</string>
+    	
+    <string name="settings_registerUserName">Registration Username</string>
+    <string name="settings_registerUserNameSummary">Enter your Username you registered with</string>
+    	
+    <string name="settings_registerPassword">Registration Password</string>
+    <string name="settings_registerPasswordSummary">Enter the Password you registered with</string>
+    	
+    <string name="settings_registerEmailEnable">Get E-Mail</string>
+    <string name="settings_registerEmailEnableSummary">Get E-mailed notfications to this address</string>
+    
+    <string name="settings_registerEmailAddress">Notify Email Address</string>
+    <string name="settings_registerEmailAddressSummary">Enter an email address where you will get notifications</string>
+    	
+ <!--    
+	    Misc Preferences Page
+    	1	Save location information	- check box
+    	2	Save session practice time 	- check box
+    	3	Disable pitch detection		- check box
+		4	Show debug					- check box
+    	5	Instrument type				- list
+    	6	Buffer size					- list
+    	7	Sample rate					- list
+ -->    	
+     	
+    
+    <string name="settings_miscHeader">Miscellaneous</string>
+    <string name="settings_misc">Misc Settings</string>
+    <string name="settings_miscSummary">Other settings for the app</string>
+    
+    <string name="settings_miscSaveLocation">Location</string>
+    <string name="settings_miscSaveLocationSummary">Save location with practice times (if available)</string>
+    
+    <string name="settings_miscSavePracticeTime">Save Practice Time</string>
+    <string name="settings_miscSavePracticeTimeSummary">Keep a log of the times and duration of your practicing</string>
+    
+    <string name="settings_miscEnablePitchDetect">Pitch Detection</string>
+    <string name="settings_miscEnablePitchDetectSummary">Enable pitch detection</string>
+    
+	<string name="settings_miscInstrumentTypeDialogTitle">Instrument Type</string>
+    <string name="settings_miscInstrumentType">Instrument Type</string>
+    <string name="settings_miscInstrumentTypeSummary">Wind, drums, etc.</string>
+    
+    <string name="settings_miscBufferSizeDialogTitle">Buffer Size</string>
+    <string name="settings_miscBufferSize">Choose buffer size for audio capture</string>
+    <string name="settings_miscBufferSizeSummary">Enable pitch detection</string>
+    
+    <string name="settings_miscSampleRateDialogTitle">Sample Rate</string>
+    <string name="settings_miscSampleRate">Choose sample rate for audio capture quality</string>
+    <string name="settings_miscSampleRateSummary">Enable pitch detection</string>
+    
+    <string name="settings_miscEnableDebug">Debug Display</string>
+    <string name="settings_miscEnableDebugSummary">Enable display of debug values</string>
+    
+    
+    
+<!-- Button label strings -->
+    
+    <string name="btn_start_timing">Start Timing</string>
+    <string name="btn_switch_views">Switch Views</string>
+    <string name="start_audio">Start Audio</string>
+    <string name="stop_audio">Stop Audio</string>
+    
+
+<!-- Progress bar strings -->    
+    
+    <string name="threshold">Threshold</string>
+    <string name="time_label">Time</string>
+    
+
+    
+    <string name="default_threshold">10</string>
+    <string name="default_time">30</string>
+    
+    
+    
+    
+    
 </resources>

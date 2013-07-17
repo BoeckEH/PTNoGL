@@ -1,0 +1,98 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <PreferenceCategory android:title="@string/settings_misc" >
+		       
+    	<CheckBoxPreference
+            android:key="misc_saveLocation"
+            android:title="@string/settings_miscSaveLocation"
+            android:summary="@string/settings_miscSaveLocationSummary"
+            android:defaultValue="true" />
+    	<CheckBoxPreference
+            android:key="misc_savePracticeTime"
+            android:title="@string/settings_miscSavePracticeTime"
+            android:summary="@string/settings_miscSavePracticeTimeSummary"
+            android:defaultValue="true" />
+    	<CheckBoxPreference
+            android:key="misc_enablePitchDetect"
+            android:title="@string/settings_miscEnablePitchDetect"
+            android:summary="@string/settings_miscEnablePitchDetectSummary"
+            android:defaultValue="false" />
+    	<CheckBoxPreference
+            android:key="misc_enableDebug"
+            android:title="@string/settings_miscEnableDebug"
+            android:summary="@string/settings_miscEnableDebugSummary"
+            android:defaultValue="true" />
+    		<ListPreference
+            android:key="misc_instrumentType"
+            android:title="@string/settings_miscInstrumentType"
+            android:summary="@string/settings_miscInstrumentTypeSummary"
+            android:entries="@array/instrumentType"
+      		android:entryValues="@array/InstrumentTypeValues"
+    		android:dialogTitle="@string/settings_miscInstrumentTypeDialogTitle"
+            android:defaultValue="1" />
+    	<ListPreference
+            android:key="misc_bufferSize"
+            android:title="@string/settings_miscBufferSize"
+            android:summary="@string/settings_miscBufferSizeSummary"
+            android:entries="@array/bufferSize"
+      		android:entryValues="@array/bufferSizeValues"
+    		android:dialogTitle="@string/settings_miscBufferSizeDialogTitle"
+            android:defaultValue="1024" />
+    	<ListPreference
+            android:key="misc_sampleRate"
+            android:title="@string/settings_miscSampleRate"
+            android:summary="@string/settings_miscSampleRateSummary"
+            android:entries="@array/sampleRate"
+      		android:entryValues="@array/sampleRateValues"
+    		android:dialogTitle="@string/settings_miscSampleRateDialogTitle"
+            android:defaultValue="8000" />
+    	
+    	</PreferenceCategory>
+
+</PreferenceScreen>
+
+
+<!-- 
+	
+	    Misc Preferences Page
+    	1	Save location information	- check box
+    	2	Save session practice time 	- check box
+    	3	Disable pitch detection		- check box
+		4	Show debug					- check box
+    	5	Instrument type				- list
+    	6	Buffer size					- list
+    	7	Sample rate					- list
+    	
+ 	none
+    text
+    textCapCharacters
+    textCapWords
+    textCapSentences
+    textAutoCorrect
+    textAutoComplete
+    textMultiLine
+    textImeMultiLine
+    textNoSuggestions
+    textUri
+    textEmailAddress
+    textEmailSubject
+    textShortMessage
+    textLongMessage
+    textPersonName
+    textPostalAddress
+    textPassword
+    textVisiblePassword
+    textWebEditText
+    textFilter
+    textPhonetic
+    textWebEmailAddress
+    textWebPassword
+    number
+    numberSigned
+    numberDecimal
+    numberPassword
+    phone
+    datetime
+    date
+    time
+ -->

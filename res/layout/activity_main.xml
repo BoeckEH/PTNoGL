@@ -5,42 +5,140 @@
     android:layout_height="fill_parent"
     android:layout_alignParentBottom="true"
     android:layout_alignParentRight="true"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    tools:ignore="HardcodedText" >
 
     <TextView
         android:id="@+id/tv_test"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="20"
+        android:layout_height="0dp"
+        android:layout_gravity="top"
+        android:layout_weight="5"
         android:text="Large Text"
         android:textSize="20sp" />
 
-    <SeekBar
-        android:id="@+id/sb_GLParamZ"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignTop="@+id/iv_Scope"
-        android:layout_below="@id/tv_test"
-        android:layout_weight="20" />
-
-    <ImageView
-        android:id="@+id/iv_Scope"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/sb_GLParamZ"
-        android:layout_weight="20"
-        android:contentDescription="nothing much"
-        android:gravity="center"
-        android:src="@android:drawable/gallery_thumb" />
-
     <LinearLayout
-        android:id="@+id/LL"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="100"
-        android:orientation="vertical" >
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/btnStartStopAudio"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="33"
+            android:text="@string/start_audio" />
+
+        <Button
+            android:id="@+id/btnStartStopTiming"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="33"
+            android:text="@string/btn_start_timing" />
+
+        <Button
+            android:id="@+id/btnSwitchViews"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="33"
+            android:text="@string/btn_switch_views" />
+
+        <ProgressBar
+            android:id="@+id/pb_HeardSound"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="33" />
 
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="25"
+            android:text="@string/threshold"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <ProgressBar
+            android:id="@+id/pb_Threshold"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="75"
+            android:max="100"
+            android:progress="10" />
+
+        <TextView
+            android:id="@+id/tv_ThresholdPC"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="15"
+            android:gravity="right"
+            android:text="@string/default_threshold"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="25"
+            android:text="@string/time_label"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <ProgressBar
+            android:id="@+id/pb_ETime"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="75"
+            android:max="100"
+            android:progress="10" />
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="15"
+            android:gravity="center_vertical|right"
+            android:text="0:30"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_ScopePrimary"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center|bottom"
+        android:layout_weight="60"
+        android:contentDescription="nothing ado about muchly"
+        android:gravity="center"
+        android:src="@drawable/androidtip" />
+
+    <ImageView
+        android:id="@+id/iv_ScopeSecondary"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom|center"
+        android:layout_weight="20"
+        android:scaleType="fitXY"
+        android:src="@drawable/background" />
+
 
 </LinearLayout>

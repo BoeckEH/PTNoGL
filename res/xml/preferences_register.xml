@@ -1,0 +1,48 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <PreferenceCategory android:title="@string/settings_register" >
+    
+        <CheckBoxPreference
+            android:key="register_enable"
+            android:title="@string/settings_registerEnable"
+            android:summary="@string/settings_registerEnableSummary"
+            android:defaultValue="false" />
+        <EditTextPreference
+            android:key="register_username"
+            android:title="@string/settings_registerUserName"
+            android:summary="@string/settings_registerUserNameSummary"
+            android:inputType="text"
+            android:defaultValue="" 
+            android:dependency="register_enable"/>
+        <EditTextPreference
+            android:key="register_password"
+            android:title="@string/settings_registerPassword"
+            android:summary="@string/settings_registerPasswordSummary"
+            android:inputType="textVisiblePassword"
+            android:defaultValue="" 
+            android:dependency="register_enable"/>
+        <CheckBoxPreference
+            android:key="register_receiveNotices"
+            android:title="@string/settings_registerEmailEnable"
+            android:summary="@string/settings_registerEmailEnableSummary"
+            android:defaultValue="false" 
+            android:dependency="register_enable"/>
+        <EditTextPreference
+            android:key="register_emailForNotice"
+            android:title="@string/settings_registerEmailAddress"
+            android:summary="@string/settings_registerEmailAddressSummary"
+            android:inputType="textEmailAddress"
+            android:defaultValue="" 
+            android:dependency="register_receiveNotices"/>
+    
+    </PreferenceCategory>
+
+</PreferenceScreen>
+
+<!--     Registration Preferences page	
+    	1	register					- checkbox
+    	2	user name for registration	- Text (depends on 1)
+    	3	user password for reg		- Password Text (depends on 1)
+    	4	receive notices				- checkbox
+    	5	user email for notifications- email text (depends on 4)
+ -->

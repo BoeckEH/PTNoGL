@@ -34,6 +34,7 @@ public class MonitorMic
 
 			// instantiate the class that creates and reads the hardware
 			micAudio = new GetAudioFromMic(maxHandler, sampleRate, bufferRequest);
+			
 		    //  and ......  GO!
 		    micAudio.startRecording();
 		    // infinite (but controlled) loop

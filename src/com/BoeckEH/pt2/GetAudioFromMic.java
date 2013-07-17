@@ -39,9 +39,15 @@ public class GetAudioFromMic {
         		minBufferSize = bufferRequest; 
         // create the recorder
         aRecorder = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, minBufferSize * 10);
-        // allocate a buffer to store the data in 
-		buffer = new short[minBufferSize];
-		// set it to 0 (not really necessary but can tell if allocated and then if reading 
+        // allocate a buffer to store the data in if we haven't already allocated one
+        if (buffer != null)
+        {
+        	buffer = null;
+        	System.gc();
+        }
+    	buffer = new short[minBufferSize];
+
+        // set it to 0 (not really necessary but can tell if allocated and then if reading 
 		Arrays.fill(buffer, (short) 0);
 		// set the call back handler 
 		aRecorder.setRecordPositionUpdateListener(myListener);

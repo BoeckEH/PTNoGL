@@ -2,6 +2,7 @@ package com.BoeckEH.pt2;
 
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Locale;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -11,16 +12,32 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.text.InputType;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Display;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.view.ViewTreeObserver;
+import android.view.ViewTreeObserver.OnPreDrawListener;
 import android.os.AsyncTask;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.DialogPreference;
+import android.preference.PreferenceManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -31,20 +48,22 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.support.v4.app.NavUtils;
 
 public class MainActivity extends Activity {
 
-		public float mPreviousY = 0;
-		public float mPreviousX = 0;
-		public final static float TOUCH_SCALE_FACTOR = 180.0f / 320 ;
 		
-		public static int bitMapWidth = 512;
-		public static int bitMapHeight = 512;
-		public static int minSample = 256;
+//		public final static int bitMapWidth = 512;
+//		public final static int bitMapHeight = 512;
+		public final static int minSample = 512;
+		public static boolean coldStart = true;
 		
 		// determines how many times the handler is called back
 		long callsToHandlr = 0;
@@ -59,12 +78,12 @@ public class MainActivity extends Activity {
 		// create the class to actually DO the FFT
 		ColumFFT cFFT;
 	    float[] magnitude;
-	    public static final int distanceBack = 24;
-	    float[][] fordraw = new float[distanceBack][minSample*3/2];
-;
-		ImageView scopeView;
-		int sampleFreq = 22050;
-		int bufferRequest = 512;
+        float absMag = 255;
+        
+		ImageView primaryScopeView;
+		ImageView secondaryScopeView;
+		static int sampleFreq = 8000;
+		static int bufferRequest = 1024;
 		MonitorMic monTheMic;
 		int iterLen;
 		
@@ -73,42 +92,77 @@ public class MainActivity extends Activity {
 		long proctime = 0;
 		String forDisplay = new String("Not reading yet!"); 	
 		static boolean drawingRunning = false;
-		int qLen =0;
+		long qLen =0;
     	int bufferRead = 0;
     	short[] buffer;
     	double maxMagnitude;
+    	boolean started = false;
     	
     	int currentBitmap = 1;
+
+    	int primaryBitmapHeight = 0, primaryBitmapWidth = 0;
+    	int secondaryBitmapHeight = 0, secondaryBitmapWidth = 0;
+    	
+    	boolean gotPreDrawMeasure = false;
+    	
+    	ViewTreeObserver primaryVTO, secondaryVTO;
+    	
+    	Rect primaryDisplay;
+    	Display display;
+    	
     	Path mCurve1 = new Path();
-    	Bitmap iv_bitmap1 = Bitmap.createBitmap(bitMapWidth, bitMapHeight, Bitmap.Config.ARGB_8888);
-    	Canvas iv_canvas1 = new Canvas(iv_bitmap1);
+    	Bitmap iv_bitmap1;
+    	Canvas iv_canvas1;
     	Path mCurve2 = new Path();
-    	Bitmap iv_bitmap2 = Bitmap.createBitmap(bitMapWidth, bitMapHeight, Bitmap.Config.ARGB_8888);
-    	Canvas iv_canvas2 = new Canvas(iv_bitmap2);
+    	Bitmap iv_bitmap2;
+    	Canvas iv_canvas2;
     	Path mCurve3 = new Path();
     	Path mCurve4 = new Path();
     	Paint curvePaint;
     	Paint gridCurvePaint;
     	Paint wipeLinePaint;
-    	int zz = 0;
+    	int offsetX = 30;
+    	int zz = offsetX;
     	int width, bottom;
         String freqString = new String();
-    	public GLSurfaceView mGLView;
-    	public boolean touchDn = false;
-    	public float pressureDown;
-    	
+        
     	public static LayoutParams myLP;
     	public static LinearLayout myLL;
+    	
+    	public int globalTimerSec = 1800;
+    	public String globalTimerString = "00:30";
+    	
+    	private static Context myContext;
   	
     	@Override
 	    public void onCreate(Bundle savedInstanceState) 
 		{
 	        super.onCreate(savedInstanceState);
+	        
+	        myContext = getApplicationContext();
 
+	        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+	        String strSCUserName = preferences.getString("pref_updateSCUsername", "myUserName");
+	        
+	        
 	        setContentView(R.layout.activity_main);
 	        getActionBar().setDisplayHomeAsUpEnabled(false);
+	        
+	        Display display = getWindowManager().getDefaultDisplay();
 
-	        scopeView = (ImageView) findViewById(R.id.iv_Scope);
+	        Button btnStart = (Button) findViewById(R.id.btnStartStopAudio);
+	        btnStart.setOnClickListener(btnStartOnClick);
+
+	        ProgressBar pbHeardSound = (ProgressBar) findViewById(R.id.pb_HeardSound);
+	        pbHeardSound.setVisibility(ProgressBar.INVISIBLE);
+	        
+	        primaryScopeView = (ImageView) findViewById(R.id.iv_ScopePrimary);
+	        primaryVTO = primaryScopeView.getViewTreeObserver();
+	        
+	        secondaryScopeView = (ImageView) findViewById(R.id.iv_ScopeSecondary);
+	        secondaryVTO = secondaryScopeView.getViewTreeObserver();
+	        
+	        primaryVTO.addOnPreDrawListener(myPDListener);
 	        
 	        curvePaint = new Paint();
 	        curvePaint.setColor(Color.GREEN);
@@ -138,29 +192,54 @@ public class MainActivity extends Activity {
 	        gridCurvePaint.setStrokeCap(Paint.Cap.ROUND);
 	        gridCurvePaint.setAntiAlias(true);
 
-	        iv_canvas1.drawColor(Color.argb(255,64, 64, 64));
-	        iv_canvas2.drawColor(Color.argb(255,64, 64, 64));
 	        
-	        width = iv_bitmap1.getWidth();
-	        bottom = iv_bitmap1.getHeight();
-
-	        for (int zz = 0; zz < 10; zz++)
-	        	Arrays.fill(fordraw[zz], (float) zz);
-//	        
-	        myLL = (LinearLayout) findViewById(R.id.LL);
-	        mGLView = new PTSurfaceView(this);
-	        ViewGroup.LayoutParams cIV = myLL.getLayoutParams();
-	        myLP = new ViewGroup.LayoutParams(cIV);
 	        
-	        myLL.addView(mGLView, myLP);
-//	        setContentView(mGLView);
-	        StartMonitoring();
+//	        StartMonitoring();
 	 
 	    };
+	    
+	    public static Context getAppContext()
+	    {
+	    	return myContext;
+	    }
+	    
+	    public OnPreDrawListener myPDListener = new OnPreDrawListener() {
+			
+			@Override
+			public boolean onPreDraw() {
+
+				if (!gotPreDrawMeasure)
+				{
+					primaryBitmapHeight = primaryScopeView.getMeasuredHeight();
+			        primaryBitmapWidth = primaryScopeView.getMeasuredWidth();
+	
+			        secondaryBitmapHeight = secondaryScopeView.getMeasuredHeight();
+			        secondaryBitmapWidth = secondaryScopeView.getMeasuredWidth();
+			        
+			    	iv_bitmap1 = Bitmap.createBitmap(primaryBitmapWidth, primaryBitmapHeight, Bitmap.Config.ARGB_8888);
+			    	iv_canvas1 = new Canvas(iv_bitmap1);
+	
+			    	iv_bitmap2 = Bitmap.createBitmap(primaryBitmapWidth, primaryBitmapHeight, Bitmap.Config.ARGB_8888);
+			    	iv_canvas2 = new Canvas(iv_bitmap2);
+	
+			    	iv_canvas1.drawColor(Color.argb(255,64, 64, 64));
+			        iv_canvas2.drawColor(Color.argb(255,64, 64, 64));
+			        
+			        width = primaryBitmapWidth;
+			        bottom = primaryBitmapHeight;
+			        
+			        Log.d("Step", "In here again");
+			        
+			        gotPreDrawMeasure = true;
+			        
+				}
+				return true;
+			}
+		};
 
 	    @Override
 	    public boolean onCreateOptionsMenu(Menu menu) {
-	        getMenuInflater().inflate(R.menu.activity_main_menu, menu);
+	        getMenuInflater().inflate(R.menu.main_menu, menu);
 	        return true;
 	    };
 
@@ -190,8 +269,6 @@ public class MainActivity extends Activity {
 	    	{
 	    		// retrieve the payload from the message and get the encapsulated data
 	    		Bundle payloadBundle = msg.getData();
-//	    		payloadInt = payloadBundle.getInt("MaxVal");
-	    		proctime = payloadBundle.getLong("ProcTime");
 	    		buffer = payloadBundle.getShortArray("MicBuffer");
 	    		bufferRead = payloadBundle.getInt("Samples");
 	            thisView = findViewById(R.layout.activity_main);
@@ -201,44 +278,86 @@ public class MainActivity extends Activity {
     			
 	    		if (shouldUpdate)
 	    		{
-	    			qLen = toExecThread.GetQueueLength();
+	    			qLen = Debug.getNativeHeapAllocatedSize();
 	    			// format and set the text into the textview
-		    		forDisplay =  String.format("ms: %04d,  max: %06d,  calls: %08d, samples: %05d, q: %02d",proctime, payloadInt, callsToHandlr, bufferRead, qLen);
+		    		forDisplay =  String.format("ms: %03d,  max: %07.0f,  calls: %06d, samples: %04d, m: %d",proctime, absMag, callsToHandlr, bufferRead, qLen);
 		    		TextView myTextView = (TextView) findViewById(R.id.tv_test);
 		    		myTextView.setText(forDisplay);
 		    		if (bufferRead != 0)
-		    			new DrawingFFTBMAsync().execute();
-		    		// thisView.refreshDrawableState();
+		    			DrawingFFTBM();
+//		    		thisView.refreshDrawableState();
 
 	    		}
 	    	}
 	    };
 	    
+	    
+	    
+	    public OnClickListener btnStartOnClick = new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				if (primaryBitmapHeight > 0 && secondaryBitmapHeight > 0)
+				{
+					Button btnStart = (Button) v;
+					if (!started){
+						btnStart.setText(R.string.stop_audio);
+				    	StartMonitoring();
+				    	started = true;
+					} else
+					{
+						StopMonitoring();
+						started = false;
+						btnStart.setText(R.string.start_audio);
+					}
+				}
+			}
+		};
+		
+		
+	    
 	     
 	    public void StartMonitoring() {
+	    	coldStart = false;
 	    	// create the mic monitoring class
 			monTheMic = new MonitorMic(updateHandlr, sampleFreq, bufferRequest);
 	        // create the thread pool that will monitor the mic in the background
 	        toExecThread = new ThreadPoolExecutorPT();
 	        // and pass it the runnable to execute
 		    toExecThread.runTask(monTheMic.audioRunnable);
+	    	Toast.makeText(getApplicationContext(), 
+                    "Audio Engine Started", Toast.LENGTH_SHORT).show();
+	    	Button btnStart = (Button) findViewById(R.id.btnStartStopAudio);
+			btnStart.setText(R.string.stop_audio);
+		    
 	    }
 	    
-
-	    public class DrawingFFTBMAsync extends AsyncTask<Void, Bitmap, Void>
+	    public void StopMonitoring() {
+	    	if (monTheMic != null)
+	    		monTheMic.StopMonitoringMic();
+	    	if (toExecThread != null)
+	    	{
+		    	toExecThread.shutDown();
+		    	toExecThread.shutDownNow();
+		    	Toast.makeText(getApplicationContext(), 
+	                    "Audio Engine Stopped", Toast.LENGTH_SHORT).show();
+		    	Button btnStart = (Button) findViewById(R.id.btnStartStopAudio);
+				btnStart.setText(R.string.start_audio);
+	    	}
+	    }
+	    
+	    public void DrawingFFTBM() 
 	    {
-
-			@Override
-			protected Void doInBackground(Void... params) {
-				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO + android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
+	    		
+//				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO + android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
 				// we need a float array, and we don't know at compile time how big the read might be, so runtime!
 				// might as well do the FFT here in this thread
 		    	double[] im_buffer = new double[minSample];
 				short[] seg_re_buffer = new short[minSample];
 				double[] re_buffer = new double[minSample];
-//				Bitmap tmpBitmap;
+				Bitmap tmpBitmap;
 				Arrays.fill(im_buffer, 0);
-
 				
 				for (int aa = 0; aa < buffer.length; aa += minSample)
 				{
@@ -252,74 +371,36 @@ public class MainActivity extends Activity {
 					cFFT = new ColumFFT(minSample);
 					cFFT.fft(re_buffer, im_buffer);
 				    iterLen = re_buffer.length/2 ;
-				    magnitude = new float[iterLen*3];
-//				    Arrays.fill(magnitude, 2.3f);
+				    magnitude = new float[iterLen];
 			        // TODO:  need to decide which way we are going to graph here
 			        
 			        // if drawing the line type graph
 				    maxMagnitude = Math.hypot(re_buffer[0], im_buffer[0]); 
-				    for(int ii = 3, jj = 0; ii < (iterLen) * 3 ; ii += 3, jj++)
+				    for(int jj = 0; jj < iterLen; jj++)
 			        {
-				        // this is x
-			        	magnitude[ii] = (float) jj / (float) iterLen;
-			        	// this is y
-			        	magnitude[ii+1]= (float)((Math.hypot(re_buffer[jj], im_buffer[jj])) - 0.5)/10000.0f;
+			        	// his is y
+			        	magnitude[jj]= (float)((Math.hypot(re_buffer[jj], im_buffer[jj])));
 //				        if (maxMagnitude < magnitude[i]) maxMagnitude = magnitude[i];
 			        	// this is z
-			        	magnitude[ii+2] = 0.5f;
 				    }
 				    payloadInt = (int) maxMagnitude;
 
-				    drawingRunning = true;
-
-				    int startCopy = 0;
-				    int copyLength = magnitude.length;
-				    for (int zz=distanceBack-2; zz >= 0; zz--)
-				    {
-				    	System.arraycopy(fordraw[zz], startCopy, fordraw[zz+1], 0, copyLength);
-				    	for (int xx=0;xx<magnitude.length;xx+=3)
-				    		fordraw[zz+1][xx+2] = 0.5f - ((float)zz/(float)distanceBack) - 0.1f;
-				    };	
-				    	
-				    	
-				    System.arraycopy(magnitude, 0, fordraw[0], 0, copyLength);
-				    drawingRunning = false;
-
-//				    mGLView.requestRender();
-				    
 				    // if drawing spectrum
 //				    tmpBitmap = drawFFTCurveViaBM();
  					// if drawing spectrum echogram type
-// 					tmpBitmap = drawFFTSpecCurveViaBM();
+ 					tmpBitmap = drawFFTSpecCurveViaBM();
 //					publishProgress(tmpBitmap);
-				    publishProgress((Bitmap)null);
+			    	primaryScopeView.setImageDrawable(new BitmapDrawable(getResources(), tmpBitmap));
 				    
 				}
 			    re_buffer = null;
 			    im_buffer = null;
 			    seg_re_buffer = null;
 			    System.gc();
-			    return null;
 			}
 			
-		     protected void onProgressUpdate(Bitmap... bitmap) {
-//				    Log.i("Step", "Update");
-				    mGLView.requestRender();
 		    	 
-//		    	 scopeView.setImageDrawable(new BitmapDrawable(getResources(), bitmap[0]));
-		     	}
-		     
-		     
-	    	}
-
-/*		     protected void onPostExecute(Bitmap bitmap) {
-//			    Log.i("Step", "Garbage Collected");
-		    	 scopeView.setImageDrawable(new BitmapDrawable(getResources(), bitmap));		     }
-	    	
-	    }
-*/	   
-
-	    
+    
 	    public Bitmap drawFFTSpecCurveViaBM()
 	    {
 	        return drawSpecOnBitmaps(iv_canvas1, mCurve1, mCurve3, curvePaint, gridCurvePaint, iv_bitmap1, iterLen);
@@ -330,31 +411,35 @@ public class MainActivity extends Activity {
 	    {
 	    	lineCurve.reset();
 	    	int left = 0;
-	    	int offsetX = 30;
-	        int absMag = 25000;
+	    	float bitMapHeight = (float) bitmap.getHeight();
+	    	float bitMapWidth = (float) bitmap.getWidth();
+
 	        double alphaRatio = 255.0 / absMag;
-	        float yres = bufRead / bitMapHeight;
+	        float yres = bitMapHeight / bufRead;
 	        tPaint.setColor(Color.MAGENTA);
 	        if (alphaRatio > 255) 
 	        	alphaRatio = 255;
-	        if (zz > (width - offsetX) || zz == 0 )
+	        if (zz == offsetX || zz >= (bitMapWidth))
 	        {
-	        	zz = 0;
+	        	zz = offsetX;
 		        hatchCurve.reset();
 		        hatchCurve.moveTo(left, bottom);
-		        for(int yy = 0, jj = 0; yy < bufRead ; yy+=yres, jj++)
+		        int counter = 0;
+		        for(float yy = 0; yy < bitMapHeight ; yy+=yres)
 		        {
-			        if ((jj % 16) == 0)
+			        if ((counter % 8) == 0)
 			        {
-			        	hatchCurve.moveTo(left, jj);
-			        	hatchCurve.lineTo(left + offsetX ,jj);
+			        	hatchCurve.moveTo(left, yy);
+			        	hatchCurve.lineTo(left + offsetX , yy);
 			        }
-			        if ((jj % 64) == 0)
+			        if ((counter % 32) == 0)
 			        {
-		        		freqString = String.format("%d", (int) (ComputeFrequency(jj, bufRead, sampleFreq) / 4) );
-			        	drawText(canvas, tPaint, freqString, left, bottom - yy, 255, 0);
+		        		freqString = String.format("%d", (int) (ComputeFrequency((int)(yy / yres), bufRead, sampleFreq) / 4) );
+			        	drawText(canvas, tPaint, freqString, left, bottom - (int)yy, 255, 0);
 			        }
+			        if (absMag < magnitude[(int)(yy/yres)]) absMag = magnitude[(int)(yy/yres)];
 			        
+			        counter++;
 			        
 		        }
 		        canvas.drawPath(hatchCurve, tPaint);
@@ -368,17 +453,19 @@ public class MainActivity extends Activity {
 	        int alphaSet = 0;
         	wipeLinePaint.setColor(Color.argb(255,64, 64, 64));
         	wipeLinePaint.setStrokeWidth(2);
-        	canvas.drawLine(aa+offsetX, bottom, aa+offsetX, 0, wipeLinePaint);
+        	canvas.drawLine(aa, bottom, aa, 0, wipeLinePaint);
         	wipeLinePaint.setStrokeWidth(1);
         	wipeLinePaint.setColor(Color.GREEN);
-        	canvas.drawLine(bb+offsetX, bottom, bb+offsetX, 0, wipeLinePaint);
+        	canvas.drawLine(bb, bottom, bb, 0, wipeLinePaint);
         	float[] hsV = new float[3];
         	cPaint.setColor(Color.WHITE);
-	        for(int i = 0; i < bufRead ; i++)
+        	absMag = absMag - (absMag * 0.01f);
+	        for(float ii = 0; ii < bitMapHeight ; ii+=yres)
 	        {
-	        	alphaSet = (int)(alphaRatio * magnitude[i]);
+	        	if (absMag < magnitude[(int)(ii/yres)]) absMag = magnitude[(int)(ii/yres)];
+	        	alphaSet = (int)(alphaRatio * magnitude[(int)(ii/yres)]);
 	        	cPaint.setAlpha(alphaSet);
-	        	canvas.drawPoint(zz+offsetX, bottom - i, cPaint);
+	        	canvas.drawPoint(zz, bottom - (int)ii, cPaint);
 	        	
 	        }
     
@@ -409,33 +496,6 @@ public class MainActivity extends Activity {
 	    public Bitmap drawSpecCurveOnBitmaps(Canvas canvas, Path lineCurve, Path hatchCurve, Paint cPaint, Paint tPaint, Bitmap bitmap, int bufRead )
 	    {
  
-/*	    	if ((callsToHandlr % 8192) == 8191)
-    		{
-    			iv_bitmap1 = null;
-    			iv_bitmap2 = null;
-    	    	mCurve1 = null;
-    	    	mCurve2 = null;
-    	    	mCurve3 = null;
-    	    	mCurve4 = null;
-    	    	iv_canvas1 = null;
-    	    	iv_canvas2 = null;
-    	    	System.gc();
-
-    	    	mCurve1 = new Path();
-    	    	mCurve2 = new Path();
-    	    	iv_bitmap1 = Bitmap.createBitmap(bitMapWidth, bitMapHeight, Bitmap.Config.ARGB_8888);
-    	    	iv_canvas1 = new Canvas(iv_bitmap1);
-    	    	iv_bitmap2 = Bitmap.createBitmap(bitMapWidth, bitMapHeight, Bitmap.Config.ARGB_8888);
-    	    	iv_canvas2 = new Canvas(iv_bitmap2);
-    	    	mCurve3 = new Path();
-    	    	mCurve4 = new Path();
-    	    	
-    	        iv_canvas1.drawColor(Color.argb(255,64, 64, 64));
-    	        iv_canvas2.drawColor(Color.argb(255,64, 64, 64));
-    	        
-
-    		}
-*/
 	    	int left = 0;
 	    	int offsetY = 60;
 	        int bottom = canvas.getHeight();
@@ -472,7 +532,7 @@ public class MainActivity extends Activity {
 		        		freqString = String.format(Locale.getDefault(), "%d", 0);
 		        	else
 		        		freqString = String.format(Locale.getDefault(),"%d", (int) (ComputeFrequency(i, bufRead, sampleFreq) / 4) );
-		        	drawText(canvas, tPaint, freqString, (int) (i/xresolution), bottom - 20, 255, -90);
+		        	drawText(canvas, tPaint, freqString, i/xresolution, bottom - 20, 255, -90);
 		        }
 	        }
 	        return bitmap;
@@ -494,6 +554,8 @@ public class MainActivity extends Activity {
 	    public void drawText(Canvas canvas, Paint paint, String text, int x, int y, int alpha, double rotate)
 	    {
 	    	// draw bounding rect before rotating text
+	    				
+	    				
 	    				Rect rect = new Rect();
 	    				paint.getTextBounds(text, 0, text.length(), rect);
 	    				canvas.save();
@@ -512,164 +574,20 @@ public class MainActivity extends Activity {
 		public double ComputeFrequency(int arrayIndex, int fftOutWindowSize, int sampleRate) {
 		    return ((1.0 * sampleRate) / (1.0 * fftOutWindowSize)) * arrayIndex;
 		}
-	    
-	    
-	
 
-	class PTSurfaceView extends GLSurfaceView {
-	
-	   public ScreenRenderer myRenderer;
-	
 		
-		public PTSurfaceView(Context context){
-	      super( context );
-	      setEGLContextClientVersion(2);
-	      myRenderer = new ScreenRenderer( context );
-	      // Set the Renderer for drawing on the GLSurfaceView
-	      setRenderer( myRenderer );
-	   // Render the view only when there is a change in the drawing data
-	      setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-	   }
-	   
-	   @Override
-	   public boolean onTouchEvent(MotionEvent e) {
-	       // MotionEvent reports input details from the touch screen
-	       // and other input controls. In this case, you are only
-	       // interested in events where the touch position changed.
 	
-	       float x = e.getX();
-	       float y = e.getY();
-	       pressureDown = e.getPressure();
-	
-	       switch (e.getAction()) {
-	           case MotionEvent.ACTION_MOVE:
-	
-	               float dx = x - mPreviousX;
-	               float dy = y - mPreviousY;
-	
-	               // reverse direction of rotation above the mid-line
-	               if (y > getHeight() / 2) {
-	                 dx = dx * -1 ;
-	               }
-	
-	               // reverse direction of rotation to left of the mid-line
-	               if (x < getWidth() / 2) {
-	                 dy = dy * -1 ;
-	               }
-	
-	               myRenderer.mAngle += (dx + dy) * TOUCH_SCALE_FACTOR;  // = 180.0f / 320
-	               requestRender();
-	           case MotionEvent.ACTION_DOWN:
-	        	   touchDn = true;
-	               requestRender();
-	               break;
-	           case MotionEvent.ACTION_UP:
-	        	   touchDn = false;
-	               requestRender();
-	        	   break;
-	       }
-	
-	       mPreviousX = x;
-	       mPreviousY = y;
-	       return true;
-	   }
-	}
-    
-	class ScreenRenderer implements GLSurfaceView.Renderer
-	{
-	   private Context context;                           // Context (from Activity)
-	   public LineGraphData mLineGraphData;
-	   public float[] mProjMatrix = new float[16];
-	   public float[] mMVPMatrix = new float[16];
-	   public float[] mVMatrix = new float[16];
-	   public float[] mRotationMatrix = new float[16];
-	   public volatile float mAngle;
-	   public ScreenRenderer(Context context)  {
-	      super();
-	      this.context = context;                         // Save Specified Context
-	      this.mLineGraphData = new LineGraphData();
-	      
-	   }
-
-	   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-	      // Set the background frame color
-//	      gl.glClearColor( 01f, 01f, 01f, 1.0f );
-		   mLineGraphData = new LineGraphData();
-
-	   }
-
-	   public void onDrawFrame(GL10 gl) {
-//		      if ((magnitude != null) && !drawingRunning)
-		   boolean waited = false;
-		   if (fordraw != null)
-		      {
-			   	  long endTime = System.currentTimeMillis();
-		    	  while (drawingRunning) 
-		    	  {
-		    		  waited = true;
-		    	  };
-		    	  
-		    	  if (waited)
-		    		  Log.i("Step", String.format("Waited: %5d ms.", System.currentTimeMillis() - endTime));              
-		    	  // Redraw background color
-			      gl.glClear( GL10.GL_COLOR_BUFFER_BIT );
-		
-			      // Set to ModelView mode
-			      gl.glMatrixMode( GL10.GL_MODELVIEW );           // Activate Model View Matrix
-		//	      gl.glMatrixMode(GL10.GL_PROJECTION);
-			      gl.glLoadIdentity();                            // Load Identity Matrix
-		
-		
-		//	      gl.glTranslatef(0.0f, 0.0f, -5.0f);
-			      
-			      // Set the camera position (View matrix)
-			      Matrix.setLookAtM(mVMatrix, 0, 
-			    		  0.5f,  1.0f,  1.5f, 
-			    		  0f,    0.0f, -7.0f, 
-			    		  0f,    2.0f,  0.0f);
-		//	      gl.glFrustumf(-1f, 1f, -1f, 1f, .1f, 10f);
-			      // Calculate the projection and view transformation
-			      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
-		
-			      // Create a rotation transformation for the triangle
-		//	      long time = SystemClock.uptimeMillis() % 4000L;
-		//	      float angle = 0.090f * ((int) time);
-		
-			      Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, -1.0f);
-		
-			      // Combine the rotation matrix with the projection and camera view
-			      Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
-		//	      if (touchDn)
-		//	    	  mLineGraphData.changeToDnColour(pressureDown * 2); else mLineGraphData.changeToUpColour();
-		//	      mSquare.draw(mMVPMatrix);
-			      mLineGraphData.draw(mMVPMatrix, fordraw, fordraw[0].length / 3);
-		      }
-	   }
-
-	   public void onSurfaceChanged(GL10 gl, int x, int y) {
-
-		   // original
-		   float aspect =  (float) x / (float) y;
-
-	       if (x == 0) { // Prevent A Divide By Zero By
-	           x = 1; // Making Height Equal One
-	       }
-
-	       gl.glViewport(0, 0, x, y); // Reset The Current Viewport
-	       Matrix.frustumM(mProjMatrix, 0, -aspect, aspect, -1, 1, 1, 10);
-	       
-	   }
-
-	}
+		public void GoDoPrefsHeader(MenuItem item)
+		{
+			Intent i = new Intent(this, PreferencesActivityHeaders.class);
+		    startActivityForResult(i, 0);
+		}
 	    
 	    //{{ Activity control 
 	    @Override
 	    protected void onPause()
 	    {
-	    	mGLView.onPause();
-	    	monTheMic.StopMonitoringMic();
-	    	toExecThread.shutDown();
-	    	toExecThread.shutDownNow();
+	    	StopMonitoring();
 	    	super.onPause();
 
 	    }
@@ -678,41 +596,34 @@ public class MainActivity extends Activity {
 	    protected void onResume()
 	    {
 	    	super.onResume();
-	    	monTheMic.StartMonitoringMic();
-	    	toExecThread.runTask(monTheMic.audioRunnable);
-	    	mGLView.onResume();
+	    	if (!coldStart)
+	    		StartMonitoring();
 	    }
 
 	    @Override
 	    protected void onStop()
 	    {
-	    	
-	    	monTheMic.StopMonitoringMic();
-	    	toExecThread.shutDown();
-	    	toExecThread.shutDownNow();
+	    	StopMonitoring();
 	    	super.onStop();
-	 
 	    }
 
 	    @Override
 	    protected void onRestart()
 	    {
 	    	super.onRestart();
-	    	monTheMic.StartMonitoringMic();
-	    	toExecThread.runTask(monTheMic.audioRunnable);
+	    	if (!coldStart)
+	    		StartMonitoring();
 	    }
 
 	    @Override
 	    protected void onDestroy()
 	    {
-
-	    	monTheMic.StopMonitoringMic();
-	    	toExecThread.shutDown();
-	    	toExecThread.shutDownNow();
+	    	StopMonitoring();
 	    	super.onDestroy();
 	    	
-	    }
+	    }    
 }
 
 
 
+/**/	    

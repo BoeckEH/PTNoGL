@@ -1,0 +1,82 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/settings_audio" >
+        <EditTextPreference
+            android:key="audio_minutesToPractice"
+            android:title="@string/settings_minutesToPractice"
+            android:summary="@string/settings_minutesToPracticeSummary"
+            android:inputType="phone"
+            android:defaultValue="30" />
+        <EditTextPreference
+            android:key="audio_levelToTrigger"
+            android:title="@string/settings_triggerLevel"
+            android:summary="@string/settings_triggerLevelSummary"
+            android:inputType="phone"
+            android:defaultValue="50" />
+        <EditTextPreference
+            android:key="audio_quantumTimeInterval"
+            android:title="@string/settings_quantumTimer"
+            android:summary="@string/settings_quantumTimerSummary"
+            android:inputType="phone"
+            android:defaultValue="5" />
+        <CheckBoxPreference
+            android:key="audio_autoGainEnable"
+            android:title="@string/settings_autoGainEnable"
+            android:summary="@string/settings_autoGainEnableSummary"
+            android:defaultValue="true" />
+        <EditTextPreference
+            android:key="audio_autoGainFactor"
+            android:title="@string/settings_autoGainFactor"
+            android:summary="@string/settings_autoGainFactorSummary"
+            android:inputType="phone"
+            android:defaultValue="10"
+            android:dependency="audio_autoGainEnable" />
+        </PreferenceCategory>
+        
+    <!--
+
+    Audio Preferences Page	
+    	1	Minutes to practice		- 	number
+    	2	Audio level to trigger	-	number % of max
+    	3	Quantum time interval	-	number (secs to time once it is triggered)
+    	4	Auto gain enable		-	check box
+    	5	Auto gain recovery (PID)-	number (depends on 4)
+    	
+
+      
+    none
+    text
+    textCapCharacters
+    textCapWords
+    textCapSentences
+    textAutoCorrect
+    textAutoComplete
+    textMultiLine
+    textImeMultiLine
+    textNoSuggestions
+    textUri
+    textEmailAddress
+    textEmailSubject
+    textShortMessage
+    textLongMessage
+    textPersonName
+    textPostalAddress
+    textPassword
+    textVisiblePassword
+    textWebEditText
+    textFilter
+    textPhonetic
+    textWebEmailAddress
+    textWebPassword
+    number
+    numberSigned
+    numberDecimal
+    numberPassword
+    phone
+    datetime
+    date
+    time
+     -->
+    
+
+</PreferenceScreen>

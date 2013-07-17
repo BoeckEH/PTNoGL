@@ -8,37 +8,170 @@
 package com.BoeckEH.pt2;
 
 public final class R {
+    public static final class array {
+        public static final int InstrumentTypeValues=0x7f050001;
+        public static final int bufferSize=0x7f050002;
+        public static final int bufferSizeValues=0x7f050003;
+        public static final int empty_array=0x7f050006;
+        public static final int instrumentType=0x7f050000;
+        public static final int sampleRate=0x7f050004;
+        public static final int sampleRateValues=0x7f050005;
+    }
     public static final class attr {
     }
     public static final class drawable {
-        public static final int background=0x7f020000;
-        public static final int ic_action_search=0x7f020001;
-        public static final int ic_launcher=0x7f020002;
+        public static final int androidtip=0x7f020000;
+        public static final int background=0x7f020001;
+        public static final int ic_action_search=0x7f020002;
+        public static final int ic_launcher=0x7f020003;
     }
     public static final class id {
-        public static final int AudioSetting=0x7f070006;
-        public static final int LL=0x7f070004;
-        public static final int LL_master=0x7f070000;
-        public static final int TimerSetting=0x7f070007;
-        public static final int iv_Scope=0x7f070003;
-        public static final int menu_settings=0x7f070005;
-        public static final int mi_Save=0x7f070008;
-        public static final int sb_GLParamZ=0x7f070002;
-        public static final int tv_test=0x7f070001;
+        public static final int LL_master=0x7f090000;
+        public static final int Preferences=0x7f09000e;
+        public static final int btnStartStopAudio=0x7f090002;
+        public static final int btnStartStopTiming=0x7f090003;
+        public static final int btnSwitchViews=0x7f090004;
+        public static final int iv_ScopePrimary=0x7f09000c;
+        public static final int iv_ScopeSecondary=0x7f09000d;
+        public static final int pb_ETime=0x7f09000a;
+        public static final int pb_HeardSound=0x7f090005;
+        public static final int pb_Threshold=0x7f090007;
+        public static final int textView1=0x7f090006;
+        public static final int textView3=0x7f090009;
+        public static final int textView4=0x7f09000b;
+        public static final int tv_ThresholdPC=0x7f090008;
+        public static final int tv_test=0x7f090001;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
     }
     public static final class menu {
-        public static final int activity_main_menu=0x7f060000;
+        public static final int main_menu=0x7f080000;
     }
     public static final class string {
-        public static final int app_name=0x7f040000;
-        public static final int hello_world=0x7f040001;
-        public static final int menu_settings=0x7f040002;
-        public static final int title_activity_main=0x7f040003;
+        public static final int app_name=0x7f060000;
+        /**  Button label strings 
+         */
+        public static final int btn_start_timing=0x7f060040;
+        public static final int btn_switch_views=0x7f060041;
+        public static final int default_threshold=0x7f060046;
+        public static final int default_time=0x7f060047;
+        public static final int hello_world=0x7f060001;
+        public static final int menu_settings=0x7f060002;
+        public static final int set_preferences=0x7f060004;
+        /**  Strings for Audio Preferences Page 
+    Audio Preferences Page	
+    	1	Minutes to practice		- 	number
+    	2	Audio level to trigger	-	number % of max
+    	3	Quantum time interval	-	number (secs to time once it is triggered)
+    	4	Auto gain enable		-	check box
+    	5	Auto gain recovery (PID)-	number (depends on 4)
+ 
+         */
+        public static final int settings_audio=0x7f060005;
+        public static final int settings_audioHeader=0x7f060006;
+        public static final int settings_audioSummary=0x7f060007;
+        public static final int settings_autoGainEnable=0x7f06000a;
+        public static final int settings_autoGainEnableSummary=0x7f06000b;
+        public static final int settings_autoGainFactor=0x7f06000c;
+        public static final int settings_autoGainFactorSummary=0x7f06000d;
+        public static final int settings_minutesToPractice=0x7f060008;
+        public static final int settings_minutesToPracticeSummary=0x7f060009;
+        public static final int settings_misc=0x7f06002d;
+        public static final int settings_miscBufferSize=0x7f060039;
+        public static final int settings_miscBufferSizeDialogTitle=0x7f060038;
+        public static final int settings_miscBufferSizeSummary=0x7f06003a;
+        public static final int settings_miscEnableDebug=0x7f06003e;
+        public static final int settings_miscEnableDebugSummary=0x7f06003f;
+        public static final int settings_miscEnablePitchDetect=0x7f060033;
+        public static final int settings_miscEnablePitchDetectSummary=0x7f060034;
+        /**     
+	    Misc Preferences Page
+    	1	Save location information	- check box
+    	2	Save session practice time 	- check box
+    	3	Disable pitch detection		- check box
+		4	Show debug					- check box
+    	5	Instrument type				- list
+    	6	Buffer size					- list
+    	7	Sample rate					- list
+ 
+         */
+        public static final int settings_miscHeader=0x7f06002c;
+        public static final int settings_miscInstrumentType=0x7f060036;
+        public static final int settings_miscInstrumentTypeDialogTitle=0x7f060035;
+        public static final int settings_miscInstrumentTypeSummary=0x7f060037;
+        public static final int settings_miscSampleRate=0x7f06003c;
+        public static final int settings_miscSampleRateDialogTitle=0x7f06003b;
+        public static final int settings_miscSampleRateSummary=0x7f06003d;
+        public static final int settings_miscSaveLocation=0x7f06002f;
+        public static final int settings_miscSaveLocationSummary=0x7f060030;
+        public static final int settings_miscSavePracticeTime=0x7f060031;
+        public static final int settings_miscSavePracticeTimeSummary=0x7f060032;
+        public static final int settings_miscSummary=0x7f06002e;
+        public static final int settings_quantumTimer=0x7f060010;
+        public static final int settings_quantumTimerSummary=0x7f060011;
+        /**  Strings for Registration preferences page 
+      Registration Preferences page	
+    	1	register					- checkbox
+    	2	user name for registration	- Text (depends on 1)
+    	3	user password for reg		- Password Text (depends on 1)
+    	4	receive notices				- checkbox
+    	5	user email for notifications- email text (depends on 4)
+ 
+         */
+        public static final int settings_register=0x7f06001f;
+        public static final int settings_registerEmailAddress=0x7f06002a;
+        public static final int settings_registerEmailAddressSummary=0x7f06002b;
+        public static final int settings_registerEmailEnable=0x7f060028;
+        public static final int settings_registerEmailEnableSummary=0x7f060029;
+        public static final int settings_registerEnable=0x7f060022;
+        public static final int settings_registerEnableSummary=0x7f060023;
+        public static final int settings_registerHeader=0x7f060020;
+        public static final int settings_registerPassword=0x7f060026;
+        public static final int settings_registerPasswordSummary=0x7f060027;
+        public static final int settings_registerSummary=0x7f060021;
+        public static final int settings_registerUserName=0x7f060024;
+        public static final int settings_registerUserNameSummary=0x7f060025;
+        public static final int settings_scEnable=0x7f060015;
+        public static final int settings_scEnableSummary=0x7f060016;
+        public static final int settings_scPassword=0x7f060019;
+        public static final int settings_scPasswordSummary=0x7f06001a;
+        public static final int settings_scUpdateOnlyWifi=0x7f06001b;
+        public static final int settings_scUpdateOnlyWifiSummary=0x7f06001c;
+        public static final int settings_scUpdateSeparateThread=0x7f06001d;
+        public static final int settings_scUpdateSeperateThreadSummary=0x7f06001e;
+        public static final int settings_scUsername=0x7f060017;
+        public static final int settings_scUsernameSummary=0x7f060018;
+        /**  Strings for SoundCloud preferences page 
+     SoundCloud Preference page
+    	1	SoundCloud enable		-	checkbox
+    	2	SoundCloud user name 	-	Text (depends on 1)
+    	3	SoundCloud password		-	password Text (depends on 1)
+    	4	Update SC on WiFi only	-	checkbox (depends on 1)
+    	5	Update in sep thread	-	checkbox (depends on 1) (default on, warn if off)
+ 
+         */
+        public static final int settings_soundCloud=0x7f060012;
+        public static final int settings_soundCloudHeader=0x7f060013;
+        public static final int settings_soundCloudSummary=0x7f060014;
+        public static final int settings_triggerLevel=0x7f06000e;
+        public static final int settings_triggerLevelSummary=0x7f06000f;
+        public static final int start_audio=0x7f060042;
+        public static final int stop_audio=0x7f060043;
+        /**  Progress bar strings 
+         */
+        public static final int threshold=0x7f060044;
+        public static final int time_label=0x7f060045;
+        public static final int title_activity_main=0x7f060003;
     }
     public static final class style {
-        public static final int AppTheme=0x7f050000;
+        public static final int AppTheme=0x7f070000;
+    }
+    public static final class xml {
+        public static final int preferences_audio=0x7f040000;
+        public static final int preferences_headers=0x7f040001;
+        public static final int preferences_misc=0x7f040002;
+        public static final int preferences_register=0x7f040003;
+        public static final int preferences_soundcloud=0x7f040004;
     }
 }

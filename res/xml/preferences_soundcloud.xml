@@ -1,0 +1,86 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/settings_soundCloud" >
+        <CheckBoxPreference
+            android:key="pref_scEnable"
+            android:title="@string/settings_scEnable"
+            android:summary="@string/settings_scEnableSummary"
+            android:defaultValue="false" />
+        <EditTextPreference
+            android:key="pref_scUsername"
+            android:title="@string/settings_scUsername"
+            android:summary="@string/settings_scUsernameSummary"
+            android:inputType="textAutoComplete"
+            android:defaultValue="me@Wherever.com" 
+            android:dependency="pref_scEnable"/>
+        <EditTextPreference
+            android:key="pref_scPassword"
+            android:title="@string/settings_scPassword"
+            android:summary="@string/settings_scPasswordSummary"
+            android:inputType="textPassword"
+            android:defaultValue="me@Wherever.com" 
+            android:dependency="pref_scEnable"/>
+        <CheckBoxPreference
+            android:key="pref_scOnlyWiFi"
+            android:title="@string/settings_scUpdateOnlyWifi"
+            android:summary="@string/settings_scUpdateOnlyWifiSummary"
+            android:defaultValue="true" 
+            android:dependency="pref_scEnable"/>
+        <CheckBoxPreference
+            android:key="pref_scSeparateThread"
+            android:title="@string/settings_scUpdateSeparateThread"
+            android:summary="@string/settings_scUpdateSeperateThreadSummary"
+            android:defaultValue="true" 
+            android:dependency="pref_scEnable"/>
+            
+        
+        
+        </PreferenceCategory>
+        
+    <!--
+
+    SoundCloud Preference page
+    	1	SoundCloud enable		-	checkbox
+    	2	SoundCloud user name 	-	Text (depends on 1)
+    	3	SoundCloud password		-	password Text (depends on 1)
+    	4	Update SC on WiFi only	-	checkbox (depends on 1)
+    	5	Update in sep thread	-	checkbox (depends on 1) (default on, warn if off)
+   	
+
+      
+    none
+    text
+    textCapCharacters
+    textCapWords
+    textCapSentences
+    textAutoCorrect
+    textAutoComplete
+    textMultiLine
+    textImeMultiLine
+    textNoSuggestions
+    textUri
+    textEmailAddress
+    textEmailSubject
+    textShortMessage
+    textLongMessage
+    textPersonName
+    textPostalAddress
+    textPassword
+    textVisiblePassword
+    textWebEditText
+    textFilter
+    textPhonetic
+    textWebEmailAddress
+    textWebPassword
+    number
+    numberSigned
+    numberDecimal
+    numberPassword
+    phone
+    datetime
+    date
+    time
+     -->
+    
+
+</PreferenceScreen>
