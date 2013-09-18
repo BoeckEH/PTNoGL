@@ -22,7 +22,7 @@
             android:title="@string/settings_miscEnableDebug"
             android:summary="@string/settings_miscEnableDebugSummary"
             android:defaultValue="true" />
-    		<ListPreference
+    	<ListPreference
             android:key="misc_instrumentType"
             android:title="@string/settings_miscInstrumentType"
             android:summary="@string/settings_miscInstrumentTypeSummary"

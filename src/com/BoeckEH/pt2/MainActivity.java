@@ -4,6 +4,7 @@ package com.BoeckEH.pt2;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
+import java.util.prefs.Preferences;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -44,6 +45,7 @@ import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.MenuItem;
@@ -62,9 +64,42 @@ public class MainActivity extends Activity {
 		
 //		public final static int bitMapWidth = 512;
 //		public final static int bitMapHeight = 512;
-		public final static int minSample = 512;
 		public static boolean coldStart = true;
 		
+		public final static int minSample = 512;
+
+    	static final int offsetX = 30;
+
+    	public int minutesToPractice = 1800;
+    	public String timeToPracticeString = "00:30";
+    	public float levelToTrigger = 0.5f;
+    	public float quantumTimeInterval = 5.0f;
+    	public boolean autoGainEnabled = false;
+    	public float autoGainFactor = 0.01f;
+    	
+    	public boolean saveLocation = true;
+    	public boolean savePracticeTime = true;
+    	public boolean enablePitchDetect = false;
+    	public boolean enableDebug = true;
+    	public int instrumentType = 1;
+    	public static int bufferRequest = 1024;
+    	public static int sampleFreq = 8000;
+    	
+    	public boolean enableRegistration = false;
+    	public String regUserName = "Whatever";
+    	public String regPassword = "";
+    	public boolean receiveNotice = false;
+    	public String regUserEmail = "me@whever.com";
+    	
+    	public boolean scEnable = false;
+    	public String scUserName = "Whatever";
+    	public String scPassword = "";
+    	public boolean scWifiOnly = true;
+    	public boolean scSepThread = true;
+    	
+    	public int primaryViewState = 0;
+    	public int secondaryViewState = 0;
+    	
 		// determines how many times the handler is called back
 		long callsToHandlr = 0;
 		// should the handler display the information (are we in the foreground and not hidden?)
@@ -82,9 +117,8 @@ public class MainActivity extends Activity {
         
 		ImageView primaryScopeView;
 		ImageView secondaryScopeView;
-		static int sampleFreq = 8000;
-		static int bufferRequest = 1024;
 		MonitorMic monTheMic;
+		ThreadPriorityTest aPTP;
 		int iterLen;
 		
 		// used in the handler to get info from the thread callback
@@ -110,27 +144,23 @@ public class MainActivity extends Activity {
     	Rect primaryDisplay;
     	Display display;
     	
-    	Path mCurve1 = new Path();
-    	Bitmap iv_bitmap1;
+    	Path[] mCurve = new Path[4];		// 4 curves
+    	Bitmap[] iv_Bitmap = new Bitmap[3]; // 3 bitmaps
+    	Canvas[] iv_Canvas = new Canvas[3]; // 3 canvases
+    	Paint[] mPaint = new Paint[3];		// 3 paints
+    	
+/*    	Bitmap iv_bitmap1;
     	Canvas iv_canvas1;
-    	Path mCurve2 = new Path();
     	Bitmap iv_bitmap2;
     	Canvas iv_canvas2;
-    	Path mCurve3 = new Path();
-    	Path mCurve4 = new Path();
-    	Paint curvePaint;
-    	Paint gridCurvePaint;
-    	Paint wipeLinePaint;
-    	int offsetX = 30;
+*/
     	int zz = offsetX;
-    	int width, bottom;
         String freqString = new String();
         
     	public static LayoutParams myLP;
     	public static LinearLayout myLL;
     	
-    	public int globalTimerSec = 1800;
-    	public String globalTimerString = "00:30";
+    	ProgressBar pbHeardSound;
     	
     	private static Context myContext;
   	
@@ -141,10 +171,6 @@ public class MainActivity extends Activity {
 	        
 	        myContext = getApplicationContext();
 
-	        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-	        String strSCUserName = preferences.getString("pref_updateSCUsername", "myUserName");
-	        
-	        
 	        setContentView(R.layout.activity_main);
 	        getActionBar().setDisplayHomeAsUpEnabled(false);
 	        
@@ -153,7 +179,7 @@ public class MainActivity extends Activity {
 	        Button btnStart = (Button) findViewById(R.id.btnStartStopAudio);
 	        btnStart.setOnClickListener(btnStartOnClick);
 
-	        ProgressBar pbHeardSound = (ProgressBar) findViewById(R.id.pb_HeardSound);
+	        pbHeardSound = (ProgressBar) findViewById(R.id.pb_heardSound);
 	        pbHeardSound.setVisibility(ProgressBar.INVISIBLE);
 	        
 	        primaryScopeView = (ImageView) findViewById(R.id.iv_ScopePrimary);
@@ -162,40 +188,44 @@ public class MainActivity extends Activity {
 	        secondaryScopeView = (ImageView) findViewById(R.id.iv_ScopeSecondary);
 	        secondaryVTO = secondaryScopeView.getViewTreeObserver();
 	        
+	    	primaryScopeView.setOnClickListener(iv_OnClick);
+	    	secondaryScopeView.setOnClickListener(iv_OnClick);
+	        
 	        primaryVTO.addOnPreDrawListener(myPDListener);
 	        
-	        curvePaint = new Paint();
-	        curvePaint.setColor(Color.GREEN);
-	        curvePaint.setStrokeWidth(2f);
-	        curvePaint.setDither(true);
-	        curvePaint.setStyle(Paint.Style.STROKE);
-	        curvePaint.setStrokeJoin(Paint.Join.ROUND);
-	        curvePaint.setStrokeCap(Paint.Cap.ROUND);
-	        curvePaint.setPathEffect(new CornerPathEffect(50) );
-	        curvePaint.setAntiAlias(true);
+	        for (int ii = 0; ii < mCurve.length; ii++)
+	        	mCurve[ii] = new Path();
+	        
+	        for (int ii = 0; ii < mPaint.length; ii++)
+	        {
+	        	mPaint[ii] = new Paint();
+	        	mPaint[ii].setStrokeCap(Paint.Cap.ROUND);
+	        	mPaint[ii].setStrokeJoin(Paint.Join.ROUND);
+	        	mPaint[ii].setDither(true);
+	        	mPaint[ii].setAntiAlias(true);
+	        }
+	        
+	        mPaint[0].setColor(Color.GREEN); // used to be curvePaint
+	        mPaint[0].setStrokeWidth(2f);
+	        mPaint[0].setStyle(Paint.Style.STROKE);
+	        mPaint[0].setPathEffect(new CornerPathEffect(50) );
+	        
+	        mPaint[1].setColor(Color.argb(255,64, 64, 64));  // used to be wipeLinePaint
+	        mPaint[1].setStrokeWidth(2f);
+	        mPaint[1].setStyle(Paint.Style.STROKE);
+	        
+	        mPaint[2].setColor(Color.WHITE); //used to be gridCurvePaint
+	        mPaint[2].setStrokeWidth(1f);
+	        mPaint[2].setStyle(Paint.Style.FILL_AND_STROKE);
+	        
 
-	        wipeLinePaint = new Paint();
-	        wipeLinePaint.setColor(Color.argb(255,64, 64, 64));
-	        wipeLinePaint.setStrokeWidth(2f);
-	        wipeLinePaint.setDither(true);
-	        wipeLinePaint.setStyle(Paint.Style.STROKE);
-	        wipeLinePaint.setStrokeJoin(Paint.Join.ROUND);
-	        wipeLinePaint.setStrokeCap(Paint.Cap.ROUND);
-	        wipeLinePaint.setAntiAlias(true);
+	        GetSharedPrefs();
 	        
-	        gridCurvePaint = new Paint();
-	        gridCurvePaint.setColor(Color.WHITE);
-	        gridCurvePaint.setStrokeWidth(1f);
-	        gridCurvePaint.setDither(true);
-	        gridCurvePaint.setStyle(Paint.Style.FILL_AND_STROKE);
-	        gridCurvePaint.setStrokeJoin(Paint.Join.ROUND);
-	        gridCurvePaint.setStrokeCap(Paint.Cap.ROUND);
-	        gridCurvePaint.setAntiAlias(true);
+	        aPTP = new ThreadPriorityTest();
+			android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO + android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
+			Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+			aPTP.ShowThreadPrority("After more favourable");
 
-	        
-	        
-//	        StartMonitoring();
-	 
 	    };
 	    
 	    public static Context getAppContext()
@@ -208,32 +238,54 @@ public class MainActivity extends Activity {
 			@Override
 			public boolean onPreDraw() {
 
-				if (!gotPreDrawMeasure)
-				{
-					primaryBitmapHeight = primaryScopeView.getMeasuredHeight();
-			        primaryBitmapWidth = primaryScopeView.getMeasuredWidth();
-	
-			        secondaryBitmapHeight = secondaryScopeView.getMeasuredHeight();
-			        secondaryBitmapWidth = secondaryScopeView.getMeasuredWidth();
-			        
-			    	iv_bitmap1 = Bitmap.createBitmap(primaryBitmapWidth, primaryBitmapHeight, Bitmap.Config.ARGB_8888);
-			    	iv_canvas1 = new Canvas(iv_bitmap1);
-	
-			    	iv_bitmap2 = Bitmap.createBitmap(primaryBitmapWidth, primaryBitmapHeight, Bitmap.Config.ARGB_8888);
-			    	iv_canvas2 = new Canvas(iv_bitmap2);
-	
-			    	iv_canvas1.drawColor(Color.argb(255,64, 64, 64));
-			        iv_canvas2.drawColor(Color.argb(255,64, 64, 64));
-			        
-			        width = primaryBitmapWidth;
-			        bottom = primaryBitmapHeight;
-			        
-			        Log.d("Step", "In here again");
-			        
-			        gotPreDrawMeasure = true;
-			        
-				}
+				onPreDrawCustom(false);
+				gotPreDrawMeasure = true;
 				return true;
+				
+			}
+		};
+		
+		public void onPreDrawCustom(boolean regardless)
+		{
+			
+			if (!gotPreDrawMeasure || regardless)
+			{
+				primaryBitmapHeight = primaryScopeView.getMeasuredHeight();
+		        primaryBitmapWidth = primaryScopeView.getMeasuredWidth();
+	
+		        secondaryBitmapHeight = secondaryScopeView.getMeasuredHeight();
+		        secondaryBitmapWidth = secondaryScopeView.getMeasuredWidth();
+		        
+		    	iv_Bitmap[0] = Bitmap.createBitmap(primaryBitmapWidth, primaryBitmapHeight, Bitmap.Config.ARGB_8888);
+		    	iv_Canvas[0] = new Canvas(iv_Bitmap[0]);
+		    	iv_Canvas[0].drawColor(Color.argb(255,64, 64, 64));
+		        
+		    	iv_Bitmap[1] = Bitmap.createBitmap(primaryBitmapWidth, primaryBitmapHeight, Bitmap.Config.ARGB_8888);
+		    	iv_Canvas[1] = new Canvas(iv_Bitmap[1]);
+		    	iv_Canvas[1].drawColor(Color.argb(255,64, 64, 64));
+	
+		    	iv_Bitmap[2] = Bitmap.createBitmap(secondaryBitmapWidth, secondaryBitmapHeight, Bitmap.Config.ARGB_8888);
+		    	iv_Canvas[2] = new Canvas(iv_Bitmap[2]);
+		    	iv_Canvas[2].drawColor(Color.argb(255,64, 64, 64));
+	
+		        Log.d("Step", "In here again");
+			}
+		}
+		
+		public OnClickListener iv_OnClick = new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				String whatIClicked = "";
+				ImageView theClickedIV = (ImageView) v;
+
+				switch (theClickedIV.getId())
+				{
+					case R.id.iv_ScopePrimary : whatIClicked = "Primary"; break;
+					case R.id.iv_ScopeSecondary : whatIClicked = "Secondary"; break;	
+				}
+	            Toast.makeText(v.getContext(), whatIClicked, Toast.LENGTH_SHORT).show();
 			}
 		};
 
@@ -284,20 +336,17 @@ public class MainActivity extends Activity {
 		    		TextView myTextView = (TextView) findViewById(R.id.tv_test);
 		    		myTextView.setText(forDisplay);
 		    		if (bufferRead != 0)
-		    			DrawingFFTBM();
+		    			doFFT();
 //		    		thisView.refreshDrawableState();
 
 	    		}
 	    	}
 	    };
 	    
-	    
-	    
 	    public OnClickListener btnStartOnClick = new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				if (primaryBitmapHeight > 0 && secondaryBitmapHeight > 0)
 				{
 					Button btnStart = (Button) v;
@@ -314,18 +363,18 @@ public class MainActivity extends Activity {
 				}
 			}
 		};
-		
-		
-	    
 	     
 	    public void StartMonitoring() {
 	    	coldStart = false;
 	    	// create the mic monitoring class
+	    	
 			monTheMic = new MonitorMic(updateHandlr, sampleFreq, bufferRequest);
 	        // create the thread pool that will monitor the mic in the background
-	        toExecThread = new ThreadPoolExecutorPT();
+			toExecThread = new ThreadPoolExecutorPT();
 	        // and pass it the runnable to execute
+	        aPTP.ShowThreadPrority("In StartMonitoring Before");
 		    toExecThread.runTask(monTheMic.audioRunnable);
+			aPTP.ShowThreadPrority("In StartMonitoring After");
 	    	Toast.makeText(getApplicationContext(), 
                     "Audio Engine Started", Toast.LENGTH_SHORT).show();
 	    	Button btnStart = (Button) findViewById(R.id.btnStartStopAudio);
@@ -342,21 +391,19 @@ public class MainActivity extends Activity {
 		    	toExecThread.shutDownNow();
 		    	Toast.makeText(getApplicationContext(), 
 	                    "Audio Engine Stopped", Toast.LENGTH_SHORT).show();
-		    	Button btnStart = (Button) findViewById(R.id.btnStartStopAudio);
-				btnStart.setText(R.string.start_audio);
+//		    	Button btnStart = (Button) findViewById(R.id.btnStartStopAudio);
+//				btnStart.setText(R.string.start_audio);
 	    	}
 	    }
 	    
-	    public void DrawingFFTBM() 
+	    public void doFFT() 
 	    {
 	    		
-//				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO + android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
 				// we need a float array, and we don't know at compile time how big the read might be, so runtime!
 				// might as well do the FFT here in this thread
 		    	double[] im_buffer = new double[minSample];
 				short[] seg_re_buffer = new short[minSample];
 				double[] re_buffer = new double[minSample];
-				Bitmap tmpBitmap;
 				Arrays.fill(im_buffer, 0);
 				
 				for (int aa = 0; aa < buffer.length; aa += minSample)
@@ -372,9 +419,6 @@ public class MainActivity extends Activity {
 					cFFT.fft(re_buffer, im_buffer);
 				    iterLen = re_buffer.length/2 ;
 				    magnitude = new float[iterLen];
-			        // TODO:  need to decide which way we are going to graph here
-			        
-			        // if drawing the line type graph
 				    maxMagnitude = Math.hypot(re_buffer[0], im_buffer[0]); 
 				    for(int jj = 0; jj < iterLen; jj++)
 			        {
@@ -384,14 +428,7 @@ public class MainActivity extends Activity {
 			        	// this is z
 				    }
 				    payloadInt = (int) maxMagnitude;
-
-				    // if drawing spectrum
-//				    tmpBitmap = drawFFTCurveViaBM();
- 					// if drawing spectrum echogram type
- 					tmpBitmap = drawFFTSpecCurveViaBM();
-//					publishProgress(tmpBitmap);
-			    	primaryScopeView.setImageDrawable(new BitmapDrawable(getResources(), tmpBitmap));
-				    
+				    decideHowToDraw();
 				}
 			    re_buffer = null;
 			    im_buffer = null;
@@ -399,15 +436,52 @@ public class MainActivity extends Activity {
 			    System.gc();
 			}
 			
-		    	 
-    
-	    public Bitmap drawFFTSpecCurveViaBM()
+	    public void decideHowToDraw()
 	    {
-	        return drawSpecOnBitmaps(iv_canvas1, mCurve1, mCurve3, curvePaint, gridCurvePaint, iv_bitmap1, iterLen);
+
+	    	int tripletInt = 0; 
+	    	Bitmap tmpBitmapPrimary, tmpBitmapSecondary;
+	    	
+	    	/*		primary
+	    	
+	    	 	0 - ghost
+	    	 	1 - spectrum
+	    	 	2 - scope
+	    	 	
+					secondary
+	    		
+	    		0 - ghost
+	    		1 - spectrum
+	    		2 - scope
+	    		3 - bigtime
+	    		 
+	    	*/
+	    	switch (primaryViewState)
+	    	{
+		    	case 0:
+		    	{
+					// drawing spectrum echogram / ghost type
+					tmpBitmapPrimary = drawSpectrumGhost(iv_Canvas[0], mCurve[0], mCurve[2], mPaint[0], mPaint[2], iv_Bitmap[0], iterLen);
+			    	primaryScopeView.setImageDrawable(new BitmapDrawable(getResources(), tmpBitmapPrimary));
+	
+			    	// drawing spectrum
+//			    	tmpBitmapSecondary = drawFFTSpectrum();
+		    		
+		    	}
+	    	}
+	    	
+	    	switch (secondaryViewState)
+	    	{
+		    	case 0:
+			    	{
+						tmpBitmapPrimary = drawSpectrumGhost(iv_Canvas[0], mCurve[0], mCurve[2], mPaint[0], mPaint[2], iv_Bitmap[0], iterLen);
+				    	primaryScopeView.setImageDrawable(new BitmapDrawable(getResources(), tmpBitmapPrimary));
+			    	}
+	    	}
+	    	
 	    }
-	    
-	    
-	    public Bitmap drawSpecOnBitmaps(Canvas canvas, Path lineCurve, Path hatchCurve, Paint cPaint, Paint tPaint, Bitmap bitmap, int bufRead )
+    
+	    public Bitmap drawSpectrumGhost(Canvas canvas, Path lineCurve, Path hatchCurve, Paint cPaint, Paint tPaint, Bitmap bitmap, int bufRead )
 	    {
 	    	lineCurve.reset();
 	    	int left = 0;
@@ -423,7 +497,7 @@ public class MainActivity extends Activity {
 	        {
 	        	zz = offsetX;
 		        hatchCurve.reset();
-		        hatchCurve.moveTo(left, bottom);
+		        hatchCurve.moveTo(left, primaryBitmapHeight);
 		        int counter = 0;
 		        for(float yy = 0; yy < bitMapHeight ; yy+=yres)
 		        {
@@ -435,7 +509,7 @@ public class MainActivity extends Activity {
 			        if ((counter % 32) == 0)
 			        {
 		        		freqString = String.format("%d", (int) (ComputeFrequency((int)(yy / yres), bufRead, sampleFreq) / 4) );
-			        	drawText(canvas, tPaint, freqString, left, bottom - (int)yy, 255, 0);
+			        	drawText(canvas, tPaint, freqString, left, primaryBitmapHeight - (int)yy, 255, 0);
 			        }
 			        if (absMag < magnitude[(int)(yy/yres)]) absMag = magnitude[(int)(yy/yres)];
 			        
@@ -446,27 +520,30 @@ public class MainActivity extends Activity {
         	}
 	        
 	        zz+=1;
-	        int aa = ((zz + 1) % width);
-	        int bb = ((zz + 2) % width);
+	        int aa = (((zz - offsetX) + 1) % primaryBitmapWidth) + offsetX;
+	        int bb = (((zz - offsetX) + 2) % primaryBitmapWidth) + offsetX;
 	        
-	        lineCurve.moveTo(left, bottom);
+	        lineCurve.moveTo(left, primaryBitmapHeight);
 	        int alphaSet = 0;
-        	wipeLinePaint.setColor(Color.argb(255,64, 64, 64));
-        	wipeLinePaint.setStrokeWidth(2);
-        	canvas.drawLine(aa, bottom, aa, 0, wipeLinePaint);
-        	wipeLinePaint.setStrokeWidth(1);
-        	wipeLinePaint.setColor(Color.GREEN);
-        	canvas.drawLine(bb, bottom, bb, 0, wipeLinePaint);
+	        mPaint[1].setColor(Color.argb(255,64, 64, 64));
+	        mPaint[1].setStrokeWidth(2);
+        	canvas.drawLine(aa, primaryBitmapHeight, aa, 0, mPaint[1]);
+        	mPaint[1].setStrokeWidth(1);
+        	mPaint[1].setColor(Color.GREEN);
+        	canvas.drawLine(bb, primaryBitmapHeight, bb, 0, mPaint[1]);
         	float[] hsV = new float[3];
         	cPaint.setColor(Color.WHITE);
-        	absMag = absMag - (absMag * 0.01f);
+        	cPaint.setAlpha(0);
+        	absMag = absMag - (absMag * autoGainFactor);
+        	
+        	int lastY = primaryBitmapHeight;
 	        for(float ii = 0; ii < bitMapHeight ; ii+=yres)
 	        {
 	        	if (absMag < magnitude[(int)(ii/yres)]) absMag = magnitude[(int)(ii/yres)];
 	        	alphaSet = (int)(alphaRatio * magnitude[(int)(ii/yres)]);
 	        	cPaint.setAlpha(alphaSet);
-	        	canvas.drawPoint(zz, bottom - (int)ii, cPaint);
-	        	
+	        	canvas.drawLine(zz, lastY, zz, primaryBitmapHeight - (int)ii, cPaint);
+	        	lastY = primaryBitmapHeight - (int)ii;
 	        }
     
 	        return bitmap;
@@ -475,25 +552,25 @@ public class MainActivity extends Activity {
 	    
 
 	    // used to draw spectrum 
-	    public Bitmap drawFFTCurveViaBM()
+	    public Bitmap drawFFTSpectrum()
 	    {
 	    	Bitmap tmpBitmapdraw;
 	    	if (currentBitmap == 1)
 		    {
 		        currentBitmap = 2;
-		        tmpBitmapdraw = drawSpecCurveOnBitmaps(iv_canvas1, mCurve1, mCurve3, curvePaint, gridCurvePaint, iv_bitmap1, iterLen);
+		        tmpBitmapdraw = drawSpectrumCurve(iv_Canvas[0], mCurve[0], mCurve[2], mPaint[0], mPaint[2], iv_Bitmap[0], iterLen);
 		        return tmpBitmapdraw;
 		        
 		    } else
 		    {
 		    	currentBitmap = 1;
-		    	tmpBitmapdraw = drawSpecCurveOnBitmaps(iv_canvas2, mCurve2, mCurve4, curvePaint, gridCurvePaint, iv_bitmap2, iterLen);
+		    	tmpBitmapdraw = drawSpectrumCurve(iv_Canvas[1], mCurve[1], mCurve[3], mPaint[0], mPaint[2], iv_Bitmap[1], iterLen);
 		    	return tmpBitmapdraw;
 
 		    }
 	    }
 
-	    public Bitmap drawSpecCurveOnBitmaps(Canvas canvas, Path lineCurve, Path hatchCurve, Paint cPaint, Paint tPaint, Bitmap bitmap, int bufRead )
+	    public Bitmap drawSpectrumCurve(Canvas canvas, Path lineCurve, Path hatchCurve, Paint cPaint, Paint tPaint, Bitmap bitmap, int bufRead )
 	    {
  
 	    	int left = 0;
@@ -582,6 +659,53 @@ public class MainActivity extends Activity {
 			Intent i = new Intent(this, PreferencesActivityHeaders.class);
 		    startActivityForResult(i, 0);
 		}
+		
+
+		public void GetSharedPrefs()
+		{
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+	    	minutesToPractice = Integer.parseInt( prefs.getString("audio_minutesToPractice", "30") );
+	    	timeToPracticeString = prefs.getString("key", "00:30");
+	    	levelToTrigger = Float.parseFloat( prefs.getString("audio_levelToTrigger", "50") );
+	    	quantumTimeInterval =  Float.parseFloat( prefs.getString("audio_quantumTimeInterval", "5.0") );
+	    	autoGainEnabled = prefs.getBoolean("audio_autoGainEnable", false);
+	    	autoGainFactor = (Float.parseFloat( prefs.getString("audio_autoGainFactor", "10")) / 1000f) ;
+	    	
+	    	saveLocation = prefs.getBoolean("misc_saveLocation", true);
+	    	savePracticeTime = prefs.getBoolean("misc_savePracticeTime", true);
+	    	enablePitchDetect = prefs.getBoolean("misc_enablePitchDetect", false);
+	    	enableDebug = prefs.getBoolean("misc_enableDebug", true);
+	    	instrumentType = Integer.parseInt( prefs.getString("misc_instrumentType", "1") );
+	    	bufferRequest = Integer.parseInt( prefs.getString("misc_bufferSize", "1024") );
+	    	sampleFreq = Integer.parseInt( prefs.getString("misc_sampleRate", "8000") );
+	    	
+	    	enableRegistration = prefs.getBoolean("register_enable", false);
+	    	regUserName = prefs.getString("register_username", "Whatever");
+	    	regPassword = prefs.getString("register_password", "");
+	    	receiveNotice = prefs.getBoolean("register_receiveNotices", false);
+	    	regUserEmail = prefs.getString("register_emailForNotice", "me@wherever.com");
+	    	
+	    	scEnable = prefs.getBoolean("pref_scEnable", false);
+	    	scUserName = prefs.getString("pref_scUsername", "Whatever");
+	    	scPassword = prefs.getString("pref_scPassword", "");
+	    	scWifiOnly = prefs.getBoolean("pref_scOnlyWiFi", true);
+	    	scSepThread = prefs.getBoolean("pref_scSeparateThread", true);
+	    	
+	    	primaryViewState = prefs.getInt("last_primaryViewState", 0); 
+	    	secondaryViewState = prefs.getInt("last_secondaryViewState", 0); 
+		}
+	    
+		public void SetSharedPrefs()
+		{
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			SharedPreferences.Editor prefsEditor = prefs.edit();
+
+			prefsEditor.putInt("last_primaryViewState", primaryViewState);
+			prefsEditor.putInt("last_secondaryViewState", secondaryViewState);
+			
+			
+		}
 	    
 	    //{{ Activity control 
 	    @Override
@@ -596,6 +720,7 @@ public class MainActivity extends Activity {
 	    protected void onResume()
 	    {
 	    	super.onResume();
+	    	GetSharedPrefs();
 	    	if (!coldStart)
 	    		StartMonitoring();
 	    }
@@ -611,6 +736,7 @@ public class MainActivity extends Activity {
 	    protected void onRestart()
 	    {
 	    	super.onRestart();
+	    	GetSharedPrefs();
 	    	if (!coldStart)
 	    		StartMonitoring();
 	    }

@@ -34,7 +34,9 @@ public class MonitorMic
 
 			// instantiate the class that creates and reads the hardware
 			micAudio = new GetAudioFromMic(maxHandler, sampleRate, bufferRequest);
-			
+//			android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO );
+//			Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
 		    //  and ......  GO!
 		    micAudio.startRecording();
 		    // infinite (but controlled) loop

@@ -16,8 +16,7 @@ public class ThreadPoolExecutorPT {
     final ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(5);
     ThreadPoolExecutor threadPool = null;
     
-    MonitorMic monTheMic; 
-    
+   
     public void runTask(Runnable task)
     {
         // set priority

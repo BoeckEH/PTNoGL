@@ -34,8 +34,8 @@ public final class R {
         public static final int iv_ScopePrimary=0x7f09000c;
         public static final int iv_ScopeSecondary=0x7f09000d;
         public static final int pb_ETime=0x7f09000a;
-        public static final int pb_HeardSound=0x7f090005;
         public static final int pb_Threshold=0x7f090007;
+        public static final int pb_heardSound=0x7f090005;
         public static final int textView1=0x7f090006;
         public static final int textView3=0x7f090009;
         public static final int textView4=0x7f09000b;

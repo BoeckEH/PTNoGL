@@ -43,7 +43,7 @@
             android:text="@string/btn_switch_views" />
 
         <ProgressBar
-            android:id="@+id/pb_HeardSound"
+            android:id="@+id/pb_heardSound"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
